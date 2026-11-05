@@ -11,7 +11,9 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const DIST = path.join(ROOT, 'dist');
 const SUB_PATH = '/SystemDesign-Projects/';
 const PORT = 5197;
-const BASE = `http://localhost:${PORT}${SUB_PATH}`;
+// Set E2E_BASE to test a deployed site instead of the local build.
+const LIVE_BASE = process.env.E2E_BASE;
+const BASE = LIVE_BASE ?? `http://localhost:${PORT}${SUB_PATH}`;
 const WORKERS = Number(process.env.E2E_WORKERS ?? 6);
 const BAD_TEXT = /\bNaN\b|\bundefined\b|\bInfinity\b|\[object /;
 
@@ -525,8 +527,8 @@ async function measurePerformance(browser, ids) {
 }
 
 async function main() {
-  if (!fs.existsSync(path.join(DIST, 'index.html'))) throw new Error('Build first: npm run build');
-  const server = await startServer();
+  if (!LIVE_BASE && !fs.existsSync(path.join(DIST, 'index.html'))) throw new Error('Build first: npm run build');
+  const server = LIVE_BASE ? null : await startServer();
   const browser = await chromium.launch({ executablePath: findChrome() });
   const started = Date.now();
   const allIds = lessonIds();
@@ -556,7 +558,7 @@ async function main() {
     if (!skipAxe) await phase('Accessibility', () => testAccessibility(browser, ids));
   } finally {
     await browser.close();
-    server.close();
+    server?.close();
   }
 
   console.log(`\nFinished in ${Math.round((Date.now() - started) / 1000)} s`);

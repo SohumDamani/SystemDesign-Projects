@@ -27,6 +27,12 @@ To test the production build in a real browser, including every experiment, slid
 npm run test:e2e
 ```
 
+To run the same browser test against the deployed site:
+
+```bash
+E2E_BASE=https://sohumdamani.github.io/SystemDesign-Projects/ node tests/e2e/run.mjs
+```
+
 The rate limiter runs the real `Rate Limiter/app/rate_limit.lua` on a Lua VM. To confirm it still behaves exactly like Redis:
 
 ```bash
@@ -43,7 +49,7 @@ npm run build
 
 Upload the `dist` folder to any static host, such as Cloudflare Pages, GitHub Pages or Netlify. It uses hash-based URLs and relative paths, so it needs no server configuration and works from a sub-path.
 
-`.github/workflows/site.yml` tests and redeploys automatically on every push to `main` or `site-launch`, publishing to the `gh-pages` branch that GitHub Pages serves.
+The site is live at https://sohumdamani.github.io/SystemDesign-Projects/. `.github/workflows/site.yml` tests and redeploys automatically on every push to `main` or `site-launch`, publishing to the `gh-pages` branch that GitHub Pages serves. To deploy from your own machine instead, run `bash scripts/deploy.sh`.
 
 ## Add a lesson
 

@@ -82,8 +82,8 @@ const lab: Lab<S, P> = {
     const gb = VIEW_GB * VIEWS_PER_DAY;
     return [
       { expr: `Buffer drains if bitrate > speed: ${bitrate} vs ${p.bandwidth} Mbps`, result: bitrate > p.bandwidth ? `stalls ${fmtPct(1 - p.bandwidth / bitrate)} of the time` : 'keeps up', tone: bitrate > p.bandwidth ? 'bad' : 'good' },
-      { expr: `No CDN: ${fmtInt(gb)} GB/day × $${ORIGIN_COST}`, result: `$${fmtInt(gb * ORIGIN_COST)}` },
-      { expr: `Everything from CDN: ${fmtInt(gb)} GB/day × $${EDGE_COST}`, result: `$${fmtInt(gb * EDGE_COST)}` },
+      { expr: `No CDN: ${fmtInt(gb)} GB/day × an assumed $${ORIGIN_COST} per GB`, result: `$${fmtInt(gb * ORIGIN_COST)}` },
+      { expr: `All from a CDN: ${fmtInt(gb)} GB/day × an assumed $${EDGE_COST} per GB`, result: `$${fmtInt(gb * EDGE_COST)}` },
     ];
   },
   views: (s) => [
