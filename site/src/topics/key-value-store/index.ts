@@ -92,7 +92,7 @@ const lab: Lab<S, P> = {
     const strong = r + w > p.n;
     return [
       { label: 'Consistency', value: strong ? 'Strong' : 'Eventual', role: 'predicted', tone: strong ? 'good' : 'warn' },
-      { label: 'Stale reads', value: fmtPct(s.reads ? s.stale / s.reads : 0, 2), role: 'measured', tone: s.stale ? 'warn' : undefined },
+      { label: 'Stale reads, recently', value: fmtPct(s.staleRate, 2), role: 'measured', tone: s.staleRate > 0.0005 ? 'warn' : 'good' },
       { label: 'Failed writes', value: fmtInt(s.failedWrites), role: 'measured', tone: s.failedWrites ? 'bad' : undefined },
       { label: 'Failed reads', value: fmtInt(s.failedReads), role: 'measured', tone: s.failedReads ? 'bad' : undefined },
     ];

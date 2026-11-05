@@ -83,7 +83,7 @@ const lab: Lab<S, P> = {
     return [
       { label: 'Write latency', value: fmtDuration(predictedWriteLatency(p)), role: 'predicted' },
       { label: 'Write latency', value: fmtDuration(s.writeLatency), role: 'measured' },
-      { label: 'Own write missing', value: fmtPct(s.reads ? s.stale / s.reads : 0, 1), role: 'measured', tone: s.stale ? 'warn' : 'good' },
+      { label: 'Own write missing, recently', value: fmtPct(s.staleRate, 1), role: 'measured', tone: s.staleRate > 0.002 ? 'warn' : 'good' },
       { label: 'Acknowledged writes lost', value: fmtInt(s.lost), role: 'measured', tone: s.lost ? 'bad' : 'good' },
       { label: 'Writes blocked', value: fmtCount(s.blocked), role: 'measured', tone: s.blocked ? 'bad' : 'good' },
     ];
