@@ -135,7 +135,7 @@ export function shortestPath(g: RoadGraph, from: number, to: number, heuristicWe
 /** Slows every road along the middle stretch of a route. */
 export function addTraffic(g: RoadGraph, path: number[], factor: number) {
   const start = Math.floor(path.length / 3);
-  const end = Math.ceil((2 * path.length) / 3);
+  const end = Math.max(Math.ceil((2 * path.length) / 3), start + 2);
   for (let i = start; i < end - 1; i++) {
     const a = path[i];
     const b = path[i + 1];

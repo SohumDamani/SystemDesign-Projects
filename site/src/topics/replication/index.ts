@@ -183,11 +183,11 @@ const lab: Lab<S, P> = {
       ticks: 600,
       question: 'With 3 followers, each with an average 100 ms delay, a write waits for all of them. What\'s the average write latency?',
       options: ['About 100 ms', 'About 180 ms', 'About 300 ms'],
-      answer: 1,
-      explain: 'You wait for the slowest of three random delays: 100 × (1 + 1/2 + 1/3) ≈ 183 ms. And because followers apply in order, one slow delivery holds up the next, which raises it further.',
+      answer: 2,
+      explain: 'You wait for the slowest of three random delays: 100 × (1 + 1/2 + 1/3) ≈ 183 ms for a single write on its own. But followers apply writes in order, so one slow delivery holds up the writes behind it, and the average you will see is closer to 275 ms.',
       check: (_s, _p, h) => {
         const l = tailMean(h, 'latency', 300);
-        return l > 130 && l < 330;
+        return l > 215 && l < 350;
       },
     },
     {

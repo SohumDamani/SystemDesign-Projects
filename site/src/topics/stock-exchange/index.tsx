@@ -130,8 +130,13 @@ const lab: Lab<S, P> = {
     return s;
   },
   step(s, p, rng) {
+    // A fresh trading day keeps the input log, and so memory, bounded.
+    if (s.engine.log.length > 30000) {
+      s.engine = new MatchingEngine();
+      s.open = [];
+    }
     s.mid += rng.int(3) - 1;
-    const before = s.engine.trades.length;
+    const before = s.engine.tradeCount;
     for (let i = rng.poisson(p.ordersPerSec * DT); i > 0; i--) {
       const r = rng.next();
       if (r < p.cancelShare && s.open.length) {
@@ -149,7 +154,7 @@ const lab: Lab<S, P> = {
       if (!isMarket) s.open.push(id);
     }
     if (s.open.length > 5000) s.open = s.open.slice(-2500);
-    const done = s.engine.trades.length - before;
+    const done = s.engine.tradeCount - before;
     s.lastTrade = s.engine.trades[s.engine.trades.length - 1];
     s.tradesEma = s.tradesEma * 0.9 + (done / DT) * 0.1;
     const { bids, asks } = s.engine;
@@ -183,6 +188,7 @@ const lab: Lab<S, P> = {
   },
   View: BookView,
   views: (s) => [
+    { kind: 'note', title: 'Last experiment you ran', text: [s.fifoWinner && `Time priority: the buyer was filled by ${s.fifoWinner}.`, s.sweep && `Huge market buy: ${fmtInt(s.sweep.filled)} shares across ${s.sweep.levels} price levels, averaging ${money(s.sweep.average)} against a best price of ${money(s.sweep.best)}.`].filter(Boolean).join(' ') || 'Use the actions on the left to try time priority or a huge market order.' },
     { kind: 'log', title: 'Latest trades', lines: s.engine.trades.slice(-5).reverse().map((t) => ({ text: `${t.quantity} at ${money(t.price)}` })) },
     { kind: 'note', title: 'Determinism check', text: s.replayMatch === null ? 'Replay the input log on a brand new engine and compare.' : s.replayMatch ? 'The replayed engine is identical to the live one, in every order and every trade.' : 'The replayed engine differs from the live one.' },
   ],
@@ -365,7 +371,7 @@ const topic: Topic = {
   interview: [
     { q: 'How do you keep latency this low?', a: 'Remove everything between you and the work. Put critical parts on one machine, communicate through shared memory, pin threads to CPU cores, avoid garbage collection, and pre-allocate memory.' },
     { q: 'How is it fault tolerant with a single thread?', a: 'The log is the state. Standbys replay it, and one takes over on failure. Because matching is deterministic, all replicas are guaranteed to be identical.' },
-    { q: 'How do you ensure fairness in market data?', a: 'Reliable multicast delivers to all subscribers at once. Exchanges sometimes equalize cable lengths in colocation, so that no one gets data sooner because of their rack position.' },
+    { q: 'How do you ensure fairness in market data?', a: 'Multicast delivers to all subscribers at once, with sequence numbers and a retransmit channel for gaps. Exchanges sometimes equalize cable lengths in colocation, so that no one gets data sooner because of their rack position.' },
     { q: 'How do you scale past one core?', a: 'Shard by symbol: each stock gets its own matching engine and order book. Since orders for different stocks don\'t interact, this splits the load cleanly.' },
   ],
   mistakes: [

@@ -107,7 +107,7 @@ const lab: Lab<S, P> = {
     { key: 'batchSeconds', label: 'Batch window, for batched matching', kind: 'range', min: 1, max: 30, step: 1, unit: 's' },
     { key: 'updateSeconds', label: 'Driver location update interval', kind: 'range', min: 1, max: 120, step: 1, unit: 's' },
   ],
-  defaults: { drivers: 300, ridersPerMin: 40, tripMinutes: 5, batchSeconds: 5, updateSeconds: 4 },
+  defaults: { drivers: 300, ridersPerMin: 25, tripMinutes: 5, batchSeconds: 5, updateSeconds: 4 },
   create(p, rng) {
     const start = Array.from({ length: p.drivers }, () => ({ x: rng.next() * CITY_METERS, y: rng.next() * CITY_METERS }));
     return { now: 0, greedy: makeCity(start), batched: makeCity(start), nextRider: 1, requested: 0, lastMatch: '', searches: 0 };

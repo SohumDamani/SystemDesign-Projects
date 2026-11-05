@@ -409,7 +409,7 @@ async function testApp(browser, ids) {
 
   // Unknown routes.
   await page.goto(`${BASE}#/learn/nope`);
-  if (!(await page.locator('h1').innerText()).includes("Couldn't load")) fail('routes', 'bad lesson id not handled');
+  if (!(await page.locator('h1').innerText()).includes("doesn't exist")) fail('routes', 'bad lesson id not handled');
   await page.goto(`${BASE}#/nope`);
   if (!(await page.locator('h1').innerText()).includes("doesn't exist")) fail('routes', 'unknown route not handled');
 

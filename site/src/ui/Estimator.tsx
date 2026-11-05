@@ -29,7 +29,7 @@ export function Estimator({ spec }: { spec: EstimatorSpec }) {
   const badAssumptions: string[] = [];
   for (const v of assumptions) {
     const n = parseHuman(assumeText[v.key] ?? '');
-    if (n === null || n <= 0) badAssumptions.push(v.label);
+    if (n === null || !Number.isFinite(n) || n <= 0) badAssumptions.push(v.label);
     else parsed[v.key] = n;
   }
   const startOk = startValue !== null && startValue > 0;

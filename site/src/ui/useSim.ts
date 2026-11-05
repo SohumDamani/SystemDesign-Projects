@@ -15,6 +15,8 @@ export interface ExperimentRun {
 /** Owns one running lab: its parameters, its clock, and any guided experiment. */
 export function useSim(lab: Lab, onExperimentDone?: (index: number, correct: boolean) => void) {
   const [params, setParamsState] = useState<Params>(lab.defaults);
+  const [run, setRun] = useState<ExperimentRun | null>(null);
+  const runRef = useRef<ExperimentRun | null>(null);
   const paramsRef = useRef(params);
   const seedRef = useRef(1);
   const simRef = useRef<Sim | null>(null);
@@ -25,8 +27,6 @@ export function useSim(lab: Lab, onExperimentDone?: (index: number, correct: boo
 
   const [running, setRunning] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const [speed, setSpeed] = useState(1);
-  const [run, setRun] = useState<ExperimentRun | null>(null);
-  const runRef = useRef<ExperimentRun | null>(null);
   const [, bump] = useReducer((x: number) => x + 1, 0);
   const containerRef = useRef<HTMLDivElement>(null);
   const visibleRef = useRef(true);
@@ -45,6 +45,11 @@ export function useSim(lab: Lab, onExperimentDone?: (index: number, correct: boo
       paramsRef.current = next;
       setParamsState(next);
       if (lab.params.find((d) => d.key === key)?.rebuild) rebuild(next);
+      // Settings changed, so a guided run no longer describes what's on screen.
+      if (runRef.current) {
+        runRef.current = null;
+        setRun(null);
+      }
       bump();
     },
     [lab, rebuild],
@@ -107,6 +112,7 @@ export function useSim(lab: Lab, onExperimentDone?: (index: number, correct: boo
       const sim = simRef.current!;
       const active = runRef.current;
       if (active && !active.done) {
+        if (!runningRef.current) return;
         const exp: Experiment<any, any> = lab.experiments[active.index];
         // A guided run finishes in about four seconds, however long it simulates.
         const batch = Math.max(1, Math.ceil(exp.ticks / 40));
@@ -122,7 +128,11 @@ export function useSim(lab: Lab, onExperimentDone?: (index: number, correct: boo
         return;
       }
       if (!runningRef.current || !visibleRef.current) return;
-      for (let i = 0; i < speedRef.current; i++) advance(sim, lab, paramsRef.current);
+      const started = performance.now();
+      for (let i = 0; i < speedRef.current; i++) {
+        advance(sim, lab, paramsRef.current);
+        if (performance.now() - started > 60) break;
+      }
       bump();
     }, FRAME_MS);
     return () => {

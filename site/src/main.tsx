@@ -9,13 +9,16 @@ import '@fontsource/ibm-plex-mono/500.css';
 import './styles.css';
 import { App } from './App';
 import { ProgressProvider } from './core/progress';
+import { ErrorBoundary } from './ui/ErrorBoundary';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>
-      <ProgressProvider>
-        <App />
-      </ProgressProvider>
+      <ErrorBoundary what="The site">
+        <ProgressProvider>
+          <App />
+        </ProgressProvider>
+      </ErrorBoundary>
     </HashRouter>
   </StrictMode>,
 );

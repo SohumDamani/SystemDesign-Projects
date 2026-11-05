@@ -244,7 +244,7 @@ const topic: Topic = {
   interview: [
     { q: 'How do you reduce cost?', a: 'Serve only popular videos from the CDN, encode unpopular videos on demand, skip high resolutions for short or low-view videos, and use better codecs for videos with many views.' },
     { q: 'How do you handle a transcoding failure?', a: 'Store the original safely and treat each graph step as a retryable task, using a queue. A failure re-runs one chunk, not the whole video.' },
-    { q: 'How do you protect videos from being stolen?', a: 'DRM encrypts content so only licensed players can decode it, AES encryption with signed URLs raises the bar, and watermarks help trace leaks. None of this makes copying impossible.' },
+    { q: 'How do you protect videos from being stolen?', a: 'DRM encrypts content so only licensed players can decode it, AES encryption with signed URLs raises the bar, and visible or hidden marks in the video help trace leaks. None of this makes copying impossible.' },
     { q: 'How do you do live streaming differently?', a: 'It has a hard latency budget, so chunks must be smaller and it can\'t buffer much. There\'s also no second chance at encoding, and everyone wants the same chunk at the same moment.' },
   ],
   mistakes: [

@@ -53,7 +53,7 @@ export function Lesson() {
   if (!entry || failed) {
     return (
       <div className="page narrow">
-        <h1>Couldn't load this lesson</h1>
+        <h1>{entry ? "Couldn't load this lesson" : "That lesson doesn't exist"}</h1>
         <p>{entry ? 'Your connection may have dropped, or the site was just updated. Reloading usually fixes it.' : "This lesson doesn't exist."}</p>
         <div className="row">
           {entry && (

@@ -106,7 +106,7 @@ const lab: Lab<S, P> = {
       question: 'The cache holds only 10% of all keys, and traffic is skewed the way real traffic usually is (Zipf, s = 1). What hit rate should you expect?',
       options: ['About 10%, the share of keys it holds', 'About 70%', 'Close to 100%'],
       answer: 1,
-      explain: 'Popular keys get most of the reads, so holding the top 10% catches most traffic. The formula gives an upper bound of 75%, and LRU gets close to it without knowing which keys are popular. This skew is why caches pay off so well.',
+      explain: 'Popular keys get most of the reads, so holding the top 10% catches most traffic. The formula gives an upper bound of 75%, LRU reaches roughly 60 to 65%, and LFU gets closer without knowing which keys are popular. This skew is why caches pay off so well.',
       check: (_s, _p, h) => {
         const hit = tailMean(h, 'hit', 100);
         return hit > 55 && hit < 80;

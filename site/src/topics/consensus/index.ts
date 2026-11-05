@@ -179,7 +179,7 @@ const lab: Lab<S, P> = {
       title: 'Split the network',
       act: ['split'],
       actAt: 100,
-      ticks: 600,
+      ticks: 1100,
       question: 'The network splits, with the leader in the smaller group. It keeps accepting commands, while the larger group elects a new leader. When it heals, what happens to the old leader\'s commands?',
       options: ['Both sets get merged', 'They\'re thrown away, since they never reached a majority', 'The two groups stay diverged'],
       answer: 1,

@@ -18,18 +18,14 @@ interface S {
   retried: number;
   lastEvent: string;
   recon?: Reconciliation;
+  /** Share of recent orders that were charged twice, so it follows the current settings. */
+  doubleEma: number;
   fixed: number;
 }
 
-const doubleCharged = (s: S) => {
-  const counts = new Map<number, number>();
-  for (const c of s.provider.charges) counts.set(c.orderId, (counts.get(c.orderId) ?? 0) + 1);
-  let n = 0;
-  for (const v of counts.values()) if (v > 1) n++;
-  return n;
-};
+const doubleCharged = (s: S) => s.provider.doubled;
 
-const chargedDollars = (s: S) => s.provider.charges.length * AMOUNT;
+const chargedDollars = (s: S) => s.provider.chargeCount * AMOUNT;
 
 function predictedDoubleRate(p: P): number {
   if (p.useKey || p.retries === 0) return 0;
@@ -51,24 +47,25 @@ const lab: Lab<S, P> = {
     { key: 'useKey', label: 'Send an idempotency key', kind: 'toggle' },
   ],
   defaults: { paymentsPerSec: 50, requestLoss: 0.02, responseLoss: 0.05, retries: 2, useKey: false },
-  create: () => ({ provider: new Provider(), ledger: new Ledger(), nextOrder: 1, paid: 0, unknown: 0, orders: 0, retried: 0, lastEvent: '', fixed: 0 }),
+  create: () => ({ doubleEma: 0, provider: new Provider(), ledger: new Ledger(), nextOrder: 1, paid: 0, unknown: 0, orders: 0, retried: 0, lastEvent: '', fixed: 0 }),
   step(s, p, rng) {
     for (let i = rng.poisson(p.paymentsPerSec * DT); i > 0; i--) {
       const orderId = s.nextOrder++;
       const res = pay(s.provider, s.ledger, orderId, AMOUNT, p.retries, p.useKey, { requestLoss: p.requestLoss, responseLoss: p.responseLoss }, rng);
       s.orders++;
+      s.doubleEma = s.doubleEma * 0.99 + (s.provider.timesCharged(orderId) > 1 ? 1 : 0) * 0.01;
       if (res.attempts > 1) s.retried++;
       if (res.status === 'paid') s.paid++;
       else s.unknown++;
       s.lastEvent = `Order ${orderId}: ${res.status} after ${res.attempts} attempt${res.attempts > 1 ? 's' : ''}`;
     }
   },
-  sample: (s, p) => ({ doubles: s.orders ? (doubleCharged(s) / s.orders) * 100 : 0, math: predictedDoubleRate(p) * 100, unknown: s.orders ? (s.unknown / s.orders) * 100 : 0 }),
+  sample: (s, p) => ({ doubles: s.doubleEma * 100, math: predictedDoubleRate(p) * 100, unknown: s.orders ? (s.unknown / s.orders) * 100 : 0 }),
   charts: [{ title: 'Orders charged more than once', unit: '%', series: [{ key: 'doubles', label: 'Measured', role: 'measured' }, { key: 'math', label: 'Math', role: 'predicted' }, { key: 'unknown', label: 'Status unknown', role: 'other' }] }],
   metrics(s, p) {
     return [
       { label: 'Double-charge rate', value: fmtPct(predictedDoubleRate(p), 2), role: 'predicted' },
-      { label: 'Double-charge rate', value: fmtPct(s.orders ? doubleCharged(s) / s.orders : 0, 2), role: 'measured', tone: doubleCharged(s) ? 'bad' : 'good' },
+      { label: 'Double-charge rate', value: fmtPct(s.doubleEma, 2), role: 'measured', tone: s.doubleEma > 0.002 ? 'bad' : 'good' },
       { label: 'Orders', value: fmtCount(s.orders), role: 'measured' },
       { label: 'Unknown status', value: fmtInt(s.unknown), role: 'measured', tone: s.unknown ? 'warn' : undefined },
       { label: 'Provider charged', value: `$${fmtCount(chargedDollars(s))}`, role: 'measured' },

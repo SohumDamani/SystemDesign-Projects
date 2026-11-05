@@ -75,7 +75,7 @@ export const GUIDE: Record<string, GuideEntry> = {
   consensus: {
     level: 'advanced',
     plain: 'A group of friends picking a restaurant over a bad phone connection. If most of them agree and write it down, the decision sticks, even if someone drops off the call.',
-    remember: 'A majority must agree, so two groups can never both think they\'re in charge.',
+    remember: 'A majority must agree, so two groups can never both commit, even if an old leader still thinks it\'s in charge.',
     before: ['replication'],
   },
   'storage-engines': {
@@ -285,8 +285,8 @@ export const TRACKS: Track[] = [
     id: 'beginner',
     title: 'New to system design',
     who: 'You can code, but "shard" and "QPS" are new words',
-    description: 'Start from one server, and build up the vocabulary one lab at a time. No prior distributed systems knowledge needed.',
-    lessons: ['scale', 'load-balancer', 'cache', 'estimation', 'queueing', 'url-shortener', 'rate-limiter', 'bloom-filter', 'replication', 'sharding', 'consistent-hashing', 'framework'],
+    description: 'Start from one server, and build up the vocabulary one lab at a time. No prior distributed systems knowledge needed, though the last few lessons are a step up.',
+    lessons: ['scale', 'load-balancer', 'cache', 'estimation', 'queueing', 'url-shortener', 'rate-limiter', 'bloom-filter', 'replication', 'consistent-hashing', 'sharding', 'framework'],
   },
   {
     id: 'interview',

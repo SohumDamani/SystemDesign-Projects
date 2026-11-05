@@ -59,7 +59,7 @@ function ShortenTool({ state, params, rerender }: CustomViewProps<S, P>) {
               <tr>
                 <th>Short code</th>
                 <th>Collisions</th>
-                <th>Look it up</th>
+                <th>Resolve</th>
               </tr>
             </thead>
             <tbody>
@@ -189,7 +189,7 @@ const lab: Lab<S, P> = {
 const topic: Topic = {
   problem: [
     'A URL shortener turns a long address into a short one, and redirects anyone who visits it. It looks like a beginner question, yet it covers ID generation, read-heavy scaling, caching and collision math in a very small space.',
-    'Two facts drive the design. Reads vastly outnumber writes, perhaps 100 to 1, so this is mostly a caching problem. And a short code means a small space of possible codes, so you need a deliberate way to avoid collisions.',
+    'Two facts drive the design. Reads vastly outnumber writes, perhaps 10 to 1 or more, so this is mostly a caching problem. And a short code means a small space of possible codes, so you need a deliberate way to avoid collisions.',
   ],
   functional: [
     'Given a long URL, return a short one',

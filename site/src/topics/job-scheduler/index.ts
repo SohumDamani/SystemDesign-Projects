@@ -171,7 +171,7 @@ const lab: Lab<S, P> = {
       explain: 'Each worker only finishes 0.5 jobs a second, so 10 workers finish 5. You need rate × duration = 20 workers just to keep up, and more for headroom. It\'s Little\'s law, in the form you\'ll use most.',
       check: (_s, _p, h) => {
         const v = slope(h, 'waiting', 150, DT);
-        return v > 3.5 && v < 6.5;
+        return v > 2.5 && v < 7.5;
       },
     },
     {

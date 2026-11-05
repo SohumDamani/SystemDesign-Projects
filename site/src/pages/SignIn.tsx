@@ -46,6 +46,7 @@ export function SignIn() {
         <input
           id="profile-name"
           autoComplete="nickname"
+          maxLength={40}
           placeholder="Sohum"
           value={name}
           onChange={(e) => {

@@ -71,7 +71,9 @@ export type Input = { kind: 'new'; order: Omit<Order, 'seq'> } | { kind: 'cancel
 export class MatchingEngine {
   bids = new BookSide('buy');
   asks = new BookSide('sell');
+  /** Only the most recent trades are kept, so a long run can't use unbounded memory. */
   trades: Trade[] = [];
+  tradeCount = 0;
   /** The sequencer: everything is numbered and logged before it runs. */
   log: Input[] = [];
   private seq = 0;
@@ -108,6 +110,8 @@ export class MatchingEngine {
       };
       fills.push(trade);
       this.trades.push(trade);
+      this.tradeCount++;
+      if (this.trades.length > 4000) this.trades.splice(0, 2000);
       remaining -= quantity;
       maker.quantity -= quantity;
       if (maker.quantity === 0) level.queue.shift();
@@ -121,7 +125,7 @@ export class MatchingEngine {
   /** A fingerprint of the complete state, to compare two engines. */
   fingerprint(): string {
     const side = (s: BookSide) => s.levels.map((l) => `${l.price}:${l.queue.map((o) => `${o.id}/${o.quantity}`).join(',')}`).join('|');
-    return `${side(this.bids)}#${side(this.asks)}#${this.trades.length}`;
+    return `${side(this.bids)}#${side(this.asks)}#${this.tradeCount}`;
   }
 }
 

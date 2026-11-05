@@ -211,7 +211,7 @@ const lab: Lab<S, P> = {
       question: 'Now 5 of the 12 are gone. What happens?',
       options: ['Most of the data comes back', 'Nothing can be recovered'],
       answer: 1,
-      explain: 'Seven equations can\'t solve for eight unknowns. It\'s a sharp cliff, not gradual decay. That\'s why repair speed matters: the race is to rebuild before the next failure.',
+      explain: 'Seven equations can\'t solve for eight unknowns. It\'s a sharp cliff, not gradual decay. That\'s why repair speed matters: the contest is to rebuild before the next failure.',
       check: (s) => s.result === null,
     },
     {

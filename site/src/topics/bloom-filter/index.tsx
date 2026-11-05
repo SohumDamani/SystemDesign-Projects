@@ -52,7 +52,10 @@ function ToolView({ state, rerender }: CustomViewProps<S, P>) {
         Try the real filter. {fmtPct(f.setBits / f.size)} of its {fmtCount(f.size)} bits are set. First {shown} shown.
       </h4>
       <div className="lab-input">
-        <input value={text} onChange={(e) => setText(e.target.value)} aria-label="Word to add or check" placeholder="hello" />
+        <input value={text} onChange={(e) => {
+            setText(e.target.value);
+            setAnswer('');
+          }} aria-label="Word to add or check" placeholder="hello" />
         <button onClick={add}>Add</button>
         <button onClick={check}>Check</button>
       </div>

@@ -27,7 +27,13 @@ const keyFor = (name: string | undefined) => `sdl:progress:${name ?? 'guest'}`;
 function read<T>(key: string, fallback: T): T {
   try {
     const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
+    if (!raw) return fallback;
+    const value = JSON.parse(raw);
+    const wantsObject = fallback === null || typeof fallback === 'object';
+    if (wantsObject && (value === null || typeof value !== 'object' || Array.isArray(value))) return fallback;
+    // A saved profile must have a text name, or the sidebar can't draw it.
+    if (key === USER_KEY && typeof (value as { name?: unknown }).name !== 'string') return fallback;
+    return value as T;
   } catch {
     return fallback;
   }
@@ -57,14 +63,22 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       lessons,
       signIn(name) {
         const next = { name };
-        localStorage.setItem(USER_KEY, JSON.stringify(next));
+        try {
+          localStorage.setItem(USER_KEY, JSON.stringify(next));
+        } catch {
+          // Private browsing can block storage. The profile then lasts for this visit only.
+        }
         // A guest's progress carries over into a new profile.
         const existing = read<Record<string, LessonProgress>>(keyFor(name), {});
         setLessons((guest) => ({ ...guest, ...existing }));
         setUser(next);
       },
       signOut() {
-        localStorage.removeItem(USER_KEY);
+        try {
+          localStorage.removeItem(USER_KEY);
+        } catch {
+          // Nothing to clear if storage is blocked.
+        }
         setUser(null);
         setLessons(read(keyFor(undefined), {}));
       },

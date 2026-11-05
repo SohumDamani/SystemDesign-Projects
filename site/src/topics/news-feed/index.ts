@@ -119,7 +119,7 @@ const lab: Lab<S, P> = {
       actAt: 20,
       ticks: 60,
       question: 'With fan-out on write, each post is copied into every follower\'s feed. The top celebrity, followed by almost everyone, posts once. What does that one post cost?',
-      options: ['One write', 'About 30 writes, the average', 'Nearly 2,000 writes, and a visible delay'],
+      options: ['One write', 'About 17 writes, the average', 'Nearly 2,000 writes, and a visible delay'],
       answer: 2,
       explain: 'One post becomes one write per follower. With capacity for 2,000 writes a second, it takes about a second to drain here, and everyone else\'s posts wait behind it. At real scale, with 100 million followers, this is the hot key problem at its worst.',
       check: (s) => s.peakBacklog > 1000,
@@ -133,7 +133,7 @@ const lab: Lab<S, P> = {
       question: 'With fan-out on read, nothing is precomputed, and each feed is built when opened. What does opening a feed cost now?',
       options: ['One read, as before', 'About one read per person followed', 'Zero reads'],
       answer: 1,
-      explain: 'Posting is now free, but each open reads every followee\'s timeline, about 30 reads here. Since reads vastly outnumber writes in a news feed, this usually moves the pain somewhere worse.',
+      explain: 'Posting is now free, but each open reads every followee\'s timeline, about 24 reads here. Since reads vastly outnumber writes in a news feed, this usually moves the pain somewhere worse.',
       check: (s, _p, h) => s.peakBacklog === 0 && tailMean(h, 'reads', 30) > 15,
     },
     {

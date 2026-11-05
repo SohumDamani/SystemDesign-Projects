@@ -176,7 +176,7 @@ const lab: Lab<S, P> = {
       question: 'NTP corrects a machine\'s clock backwards by 5 ms, and the generator doesn\'t check for it. What happens?',
       options: ['Nothing, since IDs are based on time', 'It issues duplicate IDs', 'It waits automatically'],
       answer: 1,
-      explain: 'The machine re-enters milliseconds it already used, restarts its sequence at 0, and creates IDs it has already handed out. For a primary key, that\'s data corruption. It\'s the main thing that can go wrong with timestamp-based IDs.',
+      explain: 'The machine re-enters milliseconds it already used, restarts its sequence at 0, and creates IDs it has already handed out. For a database key, that\'s data corruption. It\'s the main thing that can go wrong with timestamp-based IDs.',
       check: (s) => s.duplicates > 0,
     },
     {

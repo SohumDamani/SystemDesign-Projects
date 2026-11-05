@@ -50,7 +50,7 @@ const lab: Lab<S, P> = {
     }));
     // Friendship is mutual.
     const edges = new Set<string>();
-    const wanted = Math.round((p.users * p.friends) / 2);
+    const wanted = Math.min(Math.round((p.users * p.friends) / 2), (p.users * (p.users - 1)) / 2);
     while (edges.size < wanted) {
       const a = rng.int(p.users);
       const b = rng.int(p.users);

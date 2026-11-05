@@ -69,7 +69,7 @@ const lab: Lab<S, P> = {
     const page = p.pageKb * 1024;
     return [
       { expr: `B-tree: rewrites a ${fmtBytes(page)} page for a ${RECORD_BYTES}-byte record, plus the log`, result: `${(1 + page / RECORD_BYTES).toFixed(0)}× writes` },
-      { expr: `LSM: log + flush + each time compaction rewrites it`, result: 'usually 5 to 30×' },
+      { expr: `LSM: log + flush + each time compaction rewrites it`, result: 'roughly 2 to 20×' },
       { expr: `Reads without Bloom filters check up to every file`, result: isLsm(s.store) ? `${s.store.tables.length} files` : `${s.store.height} pages per read`, tone: isLsm(s.store) && s.store.tables.length > 8 ? 'warn' : undefined },
     ];
   },
@@ -144,7 +144,7 @@ const topic: Topic = {
     'Neither one wins. You\'re trading between three kinds of amplification: extra bytes written, extra files read, and extra space used. Understanding this lets you explain why Postgres and Cassandra behave so differently, and it comes up constantly in deep-dive interviews.',
   ],
   functional: [
-    'Store and find keys by value',
+    'Store and find values by key',
     'Survive a crash without losing acknowledged writes',
     'Support range scans over sorted keys',
   ],

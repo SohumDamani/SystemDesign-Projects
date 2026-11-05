@@ -80,11 +80,15 @@ export function distanceKm(aLat: number, aLng: number, bLat: number, bLng: numbe
   return 2 * 6371 * Math.asin(Math.sqrt(h));
 }
 
-/** The smallest precision whose cell is still at least as tall as the search radius. */
-export function precisionForRadius(radiusKm: number): number {
+/**
+ * The smallest precision whose cell is at least as tall AND as wide as the search radius,
+ * so the cell and its 8 neighbors always cover it. Cells get narrower away from the equator.
+ */
+export function precisionForRadius(radiusKm: number, latitude = 38): number {
+  const shrink = Math.cos((latitude * Math.PI) / 180);
   for (let p = 8; p >= 1; p--) {
-    const heightKm = cellSize(p).lat * 111;
-    if (heightKm >= radiusKm) return p;
+    const size = cellSize(p);
+    if (Math.min(size.lat * 111, size.lng * 111 * shrink) >= radiusKm) return p;
   }
   return 1;
 }

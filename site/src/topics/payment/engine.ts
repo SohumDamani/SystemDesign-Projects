@@ -9,6 +9,14 @@ export interface ProviderBehavior {
 /** The outside provider. It's the source of truth about what was really charged. */
 export class Provider {
   charges: { orderId: number; amount: number; key: string }[] = [];
+  /** Running totals, so reading them costs nothing however long the lab runs. */
+  chargeCount = 0;
+  doubled = 0;
+  private perOrder = new Map<number, number>();
+
+  timesCharged(orderId: number) {
+    return this.perOrder.get(orderId) ?? 0;
+  }
   private seenKeys = new Set<string>();
 
   /** With an idempotency key, a repeat is recognized and not charged again. */
@@ -16,6 +24,10 @@ export class Provider {
     if (rng.chance(behavior.requestLoss)) return 'timeout';
     if (!honorKey || !this.seenKeys.has(key)) {
       this.charges.push({ orderId, amount, key });
+      this.chargeCount++;
+      const times = (this.perOrder.get(orderId) ?? 0) + 1;
+      this.perOrder.set(orderId, times);
+      if (times === 2) this.doubled++;
       this.seenKeys.add(key);
     }
     if (rng.chance(behavior.responseLoss)) return 'timeout';
@@ -35,18 +47,17 @@ export class Ledger {
   entries: LedgerEntry[] = [];
 
   record(orderId: number, amount: number, from = 'customer', to = 'merchant') {
+    this.debitTotal += amount;
+    this.creditTotal += amount;
     this.entries.push({ orderId, account: from, debit: amount, credit: 0 });
     this.entries.push({ orderId, account: to, debit: 0, credit: amount });
   }
 
+  debitTotal = 0;
+  creditTotal = 0;
+
   get totals() {
-    let debit = 0;
-    let credit = 0;
-    for (const e of this.entries) {
-      debit += e.debit;
-      credit += e.credit;
-    }
-    return { debit, credit };
+    return { debit: this.debitTotal, credit: this.creditTotal };
   }
 }
 

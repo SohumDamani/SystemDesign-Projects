@@ -40,8 +40,8 @@ const LATENCY: [string, number][] = [
   ['Read from main memory', 1e-7],
   ['Compress 1 KB', 1e-5],
   ['Read from an SSD', 1.5e-4],
-  ['Round trip within a data center', 5e-4],
   ['Read 1 MB from memory', 2.5e-4],
+  ['Round trip within a data center', 5e-4],
   ['Read 1 MB from an SSD', 1e-3],
   ['Disk seek', 1e-2],
   ['Read 1 MB from a disk', 2e-2],
@@ -195,7 +195,7 @@ function Availability() {
               </tr>
               <tr>
                 <td>{count} redundant, where any one is enough</td>
-                <td>{(parallel * 100).toFixed(8).replace(/0+$/, '')}%</td>
+                <td>{(parallel * 100).toFixed(8).replace(/\.?0+$/, '')}%</td>
                 <td>{downtime(parallel)}</td>
               </tr>
             </tbody>
@@ -290,7 +290,7 @@ const topic: Topic = {
   ],
   nonFunctional: [
     'Fast enough to do on a whiteboard in a couple of minutes',
-    'Right within about a factor of 2 to 10',
+    'Right within a factor of 2, or at worst an order of magnitude',
     'Every assumption stated out loud',
   ],
   ideas: [
@@ -307,7 +307,7 @@ const topic: Topic = {
     { choice: 'Count replicas in storage', gain: 'Honest about real disk needs', cost: 'Triples the number, so say it separately' },
   ],
   interview: [
-    { q: 'How precise does an estimate need to be?', a: 'Right to within an order of magnitude is usually enough, since the point is to choose the right architecture. Interviewers care more about clear assumptions and sound reasoning than the final digits.' },
+    { q: 'How precise does an estimate need to be?', a: 'Within a factor of 2 is a good answer, and within an order of magnitude is usually enough, since the point is to choose the right architecture. Interviewers care more about clear assumptions and sound reasoning than the final digits.' },
     { q: 'What if you don\'t know the number of users?', a: 'Ask. If the interviewer leaves it to you, state a sensible assumption and move on: "Let\'s say 10 million daily users, and I can adjust if that\'s off."' },
     { q: 'What do you do with the estimate?', a: 'Use it. Say what it implies: "100,000 reads a second means a single database can\'t do this, so we need caching and replicas." An estimate that doesn\'t change the design was wasted time.' },
   ],

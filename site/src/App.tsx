@@ -12,13 +12,22 @@ type Theme = 'light' | 'dark';
 
 function useTheme(): [Theme, () => void] {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('sdl:theme');
+    let saved: string | null = null;
+    try {
+      saved = localStorage.getItem('sdl:theme');
+    } catch {
+      // Blocked storage: fall back to the system theme.
+    }
     if (saved === 'light' || saved === 'dark') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
-    localStorage.setItem('sdl:theme', theme);
+    try {
+      localStorage.setItem('sdl:theme', theme);
+    } catch {
+      // Blocked or full storage: the theme just won't be remembered.
+    }
   }, [theme]);
   return [theme, () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))];
 }
@@ -109,10 +118,29 @@ export function App() {
   const { pathname } = useLocation();
   useEffect(() => {
     window.scrollTo(0, 0);
+    // Pages that set their own title do so after this runs.
+    if (pathname === '/signin') document.title = 'Sign in | System Design Lab';
+    else if (!/^\/(learn\/|glossary|start)|^\/$/.test(pathname)) document.title = 'Page not found | System Design Lab';
   }, [pathname]);
+  useEffect(() => {
+    if (!menu) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [menu]);
 
   return (
     <div className="shell">
+      <a
+        className="skip"
+        href="#main"
+        onClick={(e) => {
+          e.preventDefault();
+          document.getElementById('main')?.focus();
+        }}
+      >
+        Skip to content
+      </a>
       <header className="topbar">
         <button className="ghost" onClick={() => setMenu(true)}>
           Lessons
@@ -123,7 +151,7 @@ export function App() {
       </header>
       <Sidebar open={menu} onClose={() => setMenu(false)} />
       {menu && <div className="scrim" onClick={() => setMenu(false)} aria-hidden="true" />}
-      <main className="main">
+      <main className="main" id="main" tabIndex={-1}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/learn/:id" element={<Lesson />} />

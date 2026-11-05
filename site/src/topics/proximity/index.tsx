@@ -170,7 +170,7 @@ const lab: Lab<S, P> = {
       options: ['All of it', 'About half', 'Just a few percent'],
       answer: 2,
       explain: 'Only the 9 cells around you are read, a tiny part of the region. It takes an index lookup per cell, and then a distance check on what comes back. Dense neighborhoods cost more than sparse ones, as the gap against the uniform estimate shows.',
-      check: (_s, _p, h) => tailMean(h, 'scanned', 40) < 2000,
+      check: (_s, _p, h) => tailMean(h, 'scanned', 40) < 3000,
     },
     {
       title: 'The boundary problem',

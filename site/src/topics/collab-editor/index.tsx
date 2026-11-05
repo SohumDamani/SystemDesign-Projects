@@ -376,7 +376,7 @@ const topic: Topic = {
     { choice: 'Locking sections', gain: 'No conflicts at all', cost: 'People get blocked from editing' },
   ],
   interview: [
-    { q: 'Why does Google Docs use OT and not CRDTs?', a: 'It predates practical CRDTs, and a central server is natural for it. OT also keeps metadata small. Newer tools like Figma, Notion-style editors, and local-first apps often use CRDT-based approaches.' },
+    { q: 'Why does Google Docs use OT and not CRDTs?', a: 'It predates practical CRDTs, and a central server is natural for it. OT also keeps metadata small. Newer local-first tools built on Yjs or Automerge use CRDTs, and Figma\'s multiplayer is CRDT-inspired but server-authoritative.' },
     { q: 'How do you show other people\'s cursors?', a: 'Treat them as lightweight, disposable messages that aren\'t saved. Send them through the same connection, and throttle them. A cursor position that\'s lost doesn\'t matter.' },
     { q: 'How do you store history and load documents quickly?', a: 'Keep an operation log, plus periodic snapshots. Loading means reading the latest snapshot and replaying the few operations since. History comes from the log.' },
     { q: 'How do you shrink tombstones?', a: 'Once every replica has seen a delete, the tombstone can be removed safely. It requires knowing what everyone has seen, which is harder when people can be offline for months.' },
