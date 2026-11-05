@@ -29,7 +29,7 @@ export function SignIn() {
           <button className="btn" onClick={signOut}>
             Sign out
           </button>
-          <button className="ghost" onClick={resetProgress}>
+          <button className="ghost" onClick={() => window.confirm('Clear all your progress on this device? This can\'t be undone.') && resetProgress()}>
             Clear my progress
           </button>
         </div>

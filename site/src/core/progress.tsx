@@ -85,7 +85,14 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       markVisited: (id) => patch(id, (p) => (p.visited ? p : { ...p, visited: true })),
       setCompleted: (id, done) => patch(id, (p) => ({ ...p, completed: done })),
       recordExperiment: (id, index, correct) => patch(id, (p) => ({ ...p, experiments: { ...p.experiments, [index]: correct } })),
-      resetProgress: () => setLessons({}),
+      resetProgress: () => {
+        setLessons({});
+        try {
+          localStorage.setItem(keyFor(undefined), '{}');
+        } catch {
+          // Blocked storage: nothing saved to clear.
+        }
+      },
     }),
     [user, lessons, patch],
   );

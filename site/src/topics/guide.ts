@@ -252,6 +252,12 @@ export const GUIDE: Record<string, GuideEntry> = {
     remember: 'Keep driver locations in a fast geo index, and match in small batches.',
     before: ['proximity'],
   },
+  pagination: {
+    level: 'beginner',
+    plain: 'Reading a long book by page number works until someone slips new pages in at the front. Then every page number moves, and you read the same lines twice. A bookmark that holds your place in the text doesn\'t have that problem.',
+    remember: 'Page numbers are positions and shift when data changes. A cursor names a row and doesn\'t.',
+    before: ['url-shortener'],
+  },
   ticketing: {
     level: 'intermediate',
     plain: 'A concert goes on sale and a million people rush the door. A line outside lets the shop serve people in order, and a held seat is only held for a few minutes.',
@@ -293,7 +299,7 @@ export const TRACKS: Track[] = [
     title: 'Interview in two weeks',
     who: 'You know the basics, and need the classic questions',
     description: 'The structure, the math, and the questions asked most often. Do one or two a day, and predict each experiment before you run it.',
-    lessons: ['framework', 'estimation', 'url-shortener', 'rate-limiter', 'consistent-hashing', 'key-value-store', 'unique-id', 'news-feed', 'chat', 'notification', 'youtube', 'google-drive', 'proximity', 'ticketing', 'ride-sharing'],
+    lessons: ['framework', 'estimation', 'url-shortener', 'pagination', 'rate-limiter', 'consistent-hashing', 'key-value-store', 'unique-id', 'news-feed', 'chat', 'notification', 'youtube', 'google-drive', 'proximity', 'ticketing', 'ride-sharing'],
   },
   {
     id: 'experienced',

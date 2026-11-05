@@ -1,6 +1,6 @@
 # System Design Lab
 
-Learn system design by running it. Each of the 42 lessons has a plain-English introduction, the concept, an estimator that works in both directions, a lab you can tweak and break, the code behind it, and interview follow-ups. It works for complete beginners and for experienced engineers, with learning paths for both.
+Learn system design by running it. Each of the 43 lessons has a plain-English introduction, the concept, an estimator that works in both directions, a lab you can tweak and break, the code behind it, and interview follow-ups. It works for complete beginners and for experienced engineers, with learning paths for both.
 
 Everything runs in the browser, so the site is static files and needs no servers to host.
 
