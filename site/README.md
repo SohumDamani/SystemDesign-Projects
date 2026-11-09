@@ -61,7 +61,7 @@ The test suite picks up the new lesson automatically. Every experiment needs a `
 
 ## Accounts
 
-Profiles and progress are stored in the browser's localStorage, with no password. `src/core/progress.tsx` is the one place to change to use a hosted login service such as Supabase.
+Local profiles and lesson progress are stored in this browser. Optional Google sign-in uses Supabase Auth; signed-in progress remains browser-local. To enable it, create a Supabase project, enable Google under Authentication → Providers, add the deployed site URL to Supabase's allowed redirect URLs, and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` as GitHub Actions repository secrets. For local development, copy `.env.example` to `.env.local` and fill in those two values. Google OAuth client credentials belong in Supabase and should never be committed to this repository.
 
 ## Topic coverage
 

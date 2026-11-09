@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { supabase } from './auth';
 
 // Profiles and progress live in this browser's localStorage. There's no server and no
 // password. To add real accounts, implement the same context on top of a hosted auth
@@ -11,8 +12,9 @@ export interface LessonProgress {
 }
 
 interface ProgressValue {
-  user: { name: string } | null;
+  user: { name: string; email?: string; google?: boolean; accountKey?: string } | null;
   signIn(name: string): void;
+  signInGoogle(): Promise<string | null>;
   signOut(): void;
   lessons: Record<string, LessonProgress>;
   markVisited(id: string): void;
@@ -42,12 +44,37 @@ function read<T>(key: string, fallback: T): T {
 const Ctx = createContext<ProgressValue | null>(null);
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<{ name: string } | null>(() => read(USER_KEY, null));
-  const [lessons, setLessons] = useState<Record<string, LessonProgress>>(() => read(keyFor(read<{ name: string } | null>(USER_KEY, null)?.name), {}));
+  const [user, setUser] = useState<{ name: string; email?: string; google?: boolean; accountKey?: string } | null>(() => read(USER_KEY, null));
+  const [lessons, setLessons] = useState<Record<string, LessonProgress>>(() => {
+    const saved = read<{ name: string; accountKey?: string } | null>(USER_KEY, null);
+    return read(keyFor(saved?.accountKey ?? saved?.name), {});
+  });
+
+  useEffect(() => {
+    if (!supabase) return;
+    const sync = (session: import('@supabase/supabase-js').Session | null, signedOut = false) => {
+      if (!session?.user) {
+        if (!signedOut) return;
+        try { localStorage.removeItem(USER_KEY); } catch { /* storage may be blocked */ }
+        setUser(null);
+        setLessons(read(keyFor(undefined), {}));
+        return;
+      }
+      const email = session.user.email ?? undefined;
+      const name = (session.user.user_metadata.full_name as string | undefined) || email || 'Google learner';
+      const next = { name, email, google: true, accountKey: `google:${session.user.id}` };
+      setLessons((guest) => ({ ...guest, ...read<Record<string, LessonProgress>>(keyFor(next.accountKey), {}) }));
+      setUser(next);
+      try { localStorage.setItem(USER_KEY, JSON.stringify(next)); } catch { /* storage may be blocked */ }
+    };
+    supabase.auth.getSession().then(({ data }) => sync(data.session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => sync(session, event === 'SIGNED_OUT'));
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     try {
-      localStorage.setItem(keyFor(user?.name), JSON.stringify(lessons));
+      localStorage.setItem(keyFor(user?.accountKey ?? user?.name), JSON.stringify(lessons));
     } catch {
       // Private browsing can block storage. Progress then lasts only for this visit.
     }
@@ -73,7 +100,16 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         setLessons((guest) => ({ ...guest, ...existing }));
         setUser(next);
       },
+      async signInGoogle() {
+        if (!supabase) return 'Google sign-in is not configured yet.';
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: { redirectTo: `${window.location.origin}${window.location.pathname}#/signin` },
+        });
+        return error?.message ?? null;
+      },
       signOut() {
+        if (user?.google && supabase) void supabase.auth.signOut();
         try {
           localStorage.removeItem(USER_KEY);
         } catch {
@@ -88,7 +124,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       resetProgress: () => {
         setLessons({});
         try {
-          localStorage.setItem(keyFor(undefined), '{}');
+          localStorage.setItem(keyFor(user?.accountKey ?? user?.name), '{}');
         } catch {
           // Blocked storage: nothing saved to clear.
         }
