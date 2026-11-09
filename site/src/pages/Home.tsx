@@ -31,14 +31,15 @@ function HeroLab({ lab }: { lab: Lab }) {
           </button>
         </div>
       </div>
-      <div className="hero-math">
+      <details className="hero-math calculation-details">
+        <summary><span className="when-closed">Show calculations</span><span className="when-open">Hide calculations</span></summary>
         {steps.slice(0, 3).map((s, i) => (
           <div key={i} className="math-step">
             <span>{s.expr}</span>
             <b className={s.tone ? 'tone-text-' + s.tone : undefined}>{s.result}</b>
           </div>
         ))}
-      </div>
+      </details>
       <Chart spec={lab.charts[0]} history={history} secondsPerTick={lab.secondsPerTick} />
       <div className="hero-foot">
         <button onClick={() => sim.act('kill-a')}>{serverA?.up === false ? 'Restore server A' : 'Kill server A'}</button>

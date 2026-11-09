@@ -75,7 +75,7 @@ export function Lesson() {
   const sections = topic
     ? [
         ['understand', 'Understand'],
-        ...(topic.estimator ? [['estimate', 'Estimate']] : []),
+        ...(topic.estimator ? [['estimate', 'Calculations']] : []),
         ['run', topic.lab ? 'Run it' : 'Practice'],
         ['interview', 'In the interview'],
       ]
@@ -153,7 +153,7 @@ export function Lesson() {
                 </ul>
               </div>
             </div>
-            {topic.diagram && <Diagram spec={topic.diagram} />}
+            {topic.diagram && <Diagram key={id} spec={topic.diagram} />}
             <div className="ideas">
               {topic.ideas.map((idea, i) => (
                 <div key={i} className="idea">
@@ -168,11 +168,13 @@ export function Lesson() {
 
           {topic.estimator && (
             <section ref={(el) => void (refs.current.estimate = el)} className="lesson-section">
-              <h2>Estimate it</h2>
-              <p className="section-lede">Start from any number you know. The math runs in either direction: storage can give you QPS, or QPS can give you storage.</p>
-              <ErrorBoundary what="The estimator" resetKey={id}>
-                <Estimator spec={topic.estimator} />
-              </ErrorBoundary>
+              <details key={id} className="calculation-details lesson-calculations">
+                <summary><span className="when-closed">Show calculations</span><span className="when-open">Hide calculations</span></summary>
+                <p className="section-lede">Start with a number you know and see how it affects the rest of the system.</p>
+                <ErrorBoundary what="The estimator" resetKey={id}>
+                  <Estimator spec={topic.estimator} />
+                </ErrorBoundary>
+              </details>
             </section>
           )}
 

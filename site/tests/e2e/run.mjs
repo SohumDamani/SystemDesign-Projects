@@ -106,6 +106,9 @@ const setValue = (locator, value, event) =>
 async function testEstimator(page, where) {
   const est = page.locator('.estimator');
   if (!(await est.count())) return;
+  const disclosure = page.locator('.lesson-calculations > summary');
+  if (await est.isVisible()) fail(where, 'calculations should start collapsed');
+  await disclosure.click();
   const chips = est.locator('.seg button');
   const n = await chips.count();
   for (let i = 0; i < n; i++) {
@@ -119,6 +122,8 @@ async function testEstimator(page, where) {
   if (!(await est.locator('.field-error').count())) fail(where, 'estimator accepted bad input');
   await main.fill(good);
   if (await est.locator('.field-error').count()) fail(where, 'estimator rejected its own value');
+  await disclosure.click();
+  if (await est.isVisible()) fail(where, 'calculations did not collapse');
 }
 
 async function testDiagram(page, where) {
@@ -128,6 +133,20 @@ async function testDiagram(page, where) {
   if (n) {
     const note = await page.locator('.diagram-note').innerText();
     if (!note.trim()) fail(where, 'diagram note empty');
+  }
+  const play = page.getByRole('button', { name: 'Play walkthrough', exact: true });
+  if (await play.count()) {
+    await play.click();
+    await page.getByRole('button', { name: 'Pause', exact: true }).and(page.locator('.diagram-player button')).click();
+    const step = page.locator('.diagram-step');
+    if (!(await step.innerText()).includes('Connection 1 of ')) fail(where, 'walkthrough did not show the first connection');
+    const next = page.getByRole('button', { name: 'Next step', exact: true });
+    if (await next.isEnabled()) {
+      await next.click();
+      if (!(await step.innerText()).includes('Connection 2 of ')) fail(where, 'walkthrough did not advance');
+      await page.getByRole('button', { name: 'Previous step', exact: true }).click();
+      if (!(await step.innerText()).includes('Connection 1 of ')) fail(where, 'walkthrough did not go back');
+    }
   }
 }
 

@@ -222,8 +222,8 @@ export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry
               </div>
             ))}
           </div>
-          <div className="math">
-            <h3>What the math says</h3>
+          <details className="math calculation-details">
+            <summary><span className="when-closed">Show lab calculations</span><span className="when-open">Hide lab calculations</span></summary>
             {math.map((s, i) => (
               <div key={i} className="math-step">
                 <span>
@@ -232,7 +232,7 @@ export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry
                 <b className={s.tone ? 'tone-text-' + s.tone : undefined}>{s.result}</b>
               </div>
             ))}
-          </div>
+          </details>
           {lab.charts.map((c) => (
             <Chart key={c.title} spec={c} history={history} secondsPerTick={lab.secondsPerTick} />
           ))}
