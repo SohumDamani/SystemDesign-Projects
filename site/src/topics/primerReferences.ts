@@ -1,0 +1,45 @@
+/** Related System Design Primer sections. The Primer is conceptual context, not validation for this site's simulation math or assumptions. */
+const base = 'https://github.com/donnemartin/system-design-primer';
+const ref = (section: string, anchor: string, note: string) => ({
+  name: `System Design Primer: ${section}`,
+  url: `${base}#${anchor}`,
+  note,
+});
+const context = 'Related design guidance; this lesson’s formulas, simulated values, and assumptions are independently authored.';
+
+export const PRIMER_REFERENCES: Record<string, { name: string; url: string; note: string }[]> = {
+  scale: [ref('System design topics', 'system-design-topics-start-here', context), ref('CDN and cache', 'content-delivery-network', context)],
+  estimation: [ref('Back-of-the-envelope calculations and latency numbers', 'back-of-the-envelope-calculations', context)],
+  framework: [ref('How to approach a system design interview', 'how-to-approach-a-system-design-interview-question', context)],
+  'load-balancer': [ref('Load balancer', 'load-balancer', context)],
+  cache: [ref('Cache', 'cache', context)],
+  queueing: [ref('Latency vs throughput', 'latency-vs-throughput', context)],
+  sharding: [ref('Database sharding', 'sharding', context)],
+  replication: [ref('Availability patterns and replication', 'availability-patterns', context)],
+  consensus: [ref('Availability vs consistency', 'availability-vs-consistency', context)],
+  'storage-engines': [ref('Database systems', 'database', context)],
+  resilience: [ref('Availability patterns', 'availability-patterns', context), ref('Back pressure', 'back-pressure', context)],
+  gossip: [ref('Replication and availability', 'availability-patterns', context)],
+  'rate-limiter': [ref('Additional interview questions: API rate limiter', 'additional-system-design-interview-questions', context)],
+  'consistent-hashing': [ref('Sharding and consistent hashing', 'sharding', context)],
+  'key-value-store': [ref('Key-value stores', 'key-value-store', context)],
+  'unique-id': [ref('Additional interview questions: random ID generation', 'additional-system-design-interview-questions', context)],
+  'url-shortener': [ref('Interview question solutions: Pastebin or Bitly', 'system-design-interview-questions-with-solutions', context)],
+  'web-crawler': [ref('Interview question solutions: web crawler', 'system-design-interview-questions-with-solutions', context)],
+  notification: [ref('Asynchronism and message queues', 'asynchronism', context)],
+  'news-feed': [ref('Interview question solutions: Twitter timeline', 'system-design-interview-questions-with-solutions', context)],
+  chat: [ref('Additional interview questions: chat app', 'additional-system-design-interview-questions', context)],
+  autocomplete: [ref('Additional interview questions: search engine', 'additional-system-design-interview-questions', context)],
+  youtube: [ref('CDN and cache', 'content-delivery-network', context)],
+  'google-drive': [ref('Additional interview questions: file sync service', 'additional-system-design-interview-questions', context)],
+  'message-queue': [ref('Asynchronism, message queues, and back pressure', 'asynchronism', context)],
+  'ad-click': [ref('Asynchronism and message queues', 'asynchronism', context)],
+  hotel: [ref('Database systems and transactions', 'database', context)],
+  leaderboard: [ref('Additional interview questions: sales ranking', 'additional-system-design-interview-questions', context)],
+  payment: [ref('Database transactions and consistency', 'database', context)],
+  wallet: [ref('Database transactions and consistency', 'database', context)],
+  'stock-exchange': [ref('Additional interview questions: stock exchange', 'additional-system-design-interview-questions', context)],
+  ticketing: [ref('Load balancing and database design', 'load-balancer', context)],
+  'job-scheduler': [ref('Task queues and asynchronous workflows', 'asynchronism', context)],
+  'collab-editor': [ref('Additional interview questions: Google Docs', 'additional-system-design-interview-questions', context)],
+};

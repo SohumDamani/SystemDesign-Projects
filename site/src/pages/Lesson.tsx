@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { entryFor, neighbors } from '../topics/catalog';
 import { GUIDE, LEVEL_LABEL } from '../topics/guide';
+import { PRIMER_REFERENCES } from '../topics/primerReferences';
 import { useProgress } from '../core/progress';
 import type { Topic } from '../core/types';
 import { CodePanel } from '../ui/Code';
@@ -70,6 +71,7 @@ export function Lesson() {
   const { prev, next } = neighbors(id);
   const done = Boolean(lessons[id]?.completed);
   const guide = GUIDE[id];
+  const references = [...(topic?.references ?? []), ...(PRIMER_REFERENCES[id] ?? [])];
   const sections = topic
     ? [
         ['understand', 'Understand'],
@@ -242,6 +244,20 @@ export function Lesson() {
               </>
             )}
           </section>
+
+          {references.length > 0 && (
+            <section className="lesson-section references" aria-labelledby="references-heading">
+              <h2 id="references-heading">Sources and further reading</h2>
+              <ul>
+                {references.map((reference) => (
+                  <li key={reference.url}>
+                    <a href={reference.url} target="_blank" rel="noreferrer">{reference.name}</a>
+                    {reference.note && <span> — {reference.note}</span>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
 
           <footer className="lesson-foot">
             <button className={done ? 'ghost' : 'btn'} onClick={() => setCompleted(id, !done)} aria-pressed={done}>

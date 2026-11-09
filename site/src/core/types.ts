@@ -154,4 +154,5 @@ export interface Topic {
   tradeoffs: { choice: string; gain: string; cost: string }[];
   interview: { q: string; a: string }[];
   mistakes?: string[];
+  references?: { name: string; url: string; note?: string }[];
 }
