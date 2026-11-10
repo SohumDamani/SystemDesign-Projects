@@ -3,8 +3,10 @@ import type { Lab, ParamDef, PseudoLine, SourceFile } from '../core/types';
 import type { CatalogEntry } from '../topics/catalog';
 import { fmtDuration } from '../core/format';
 import { useProgress } from '../core/progress';
+import { CHALLENGES } from '../topics/challenges';
 import { Chart } from './Chart';
 import { CodePanel } from './Code';
+import { GuidedChallenge } from './GuidedChallenge';
 import { Rich } from './Rich';
 import { useSim } from './useSim';
 import { Views } from './Views';
@@ -92,7 +94,7 @@ function LabHelp() {
 }
 
 export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry: CatalogEntry; pseudocode?: PseudoLine[] | ((p: any) => PseudoLine[]); sources?: SourceFile[] }) {
-  const { lessons, recordExperiment } = useProgress();
+  const { lessons, recordExperiment, completeChallenge } = useProgress();
   const sim = useSim(lab, (index, correct) => recordExperiment(entry.id, index, correct));
   const [openExp, setOpenExp] = useState<number | null>(0);
   const { state, tick, history } = sim.sim;
@@ -106,6 +108,7 @@ export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry
   const activeRun = run && run.index === openExp ? run : null;
   const results = lessons[entry.id]?.experiments ?? {};
   const View = lab.View;
+  const challenge = CHALLENGES[entry.id];
 
   return (
     <div className="console" ref={sim.containerRef}>
@@ -138,6 +141,10 @@ export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry
       </div>
 
       <LabHelp />
+
+      {challenge && <GuidedChallenge lab={lab} challenge={challenge}
+        completed={Boolean(lessons[entry.id]?.challengeCompleted)}
+        onComplete={() => completeChallenge(entry.id)} />}
 
       <section className="experiments" aria-label="Guided experiments">
         <div className="exp-tabs" role="group" aria-label="Choose an experiment">

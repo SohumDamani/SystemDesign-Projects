@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CATALOG, entryFor } from '../src/topics/catalog';
+import { CHALLENGES, compareChallenge } from '../src/topics/challenges';
 import { GUIDE, TRACKS } from '../src/topics/guide';
 import { GLOSSARY } from '../src/topics/glossary';
 import { advance, createSim, fireAction, runExperiment } from '../src/core/sim';
@@ -53,6 +54,19 @@ describe('catalog', () => {
 
   it('has no lessons missing from the catalog', () => {
     expect(loaded.filter((m) => !entryFor(m.id)).map((m) => m.id)).toEqual([]);
+  });
+});
+
+describe('guided challenges', () => {
+  const core = CATALOG.filter((entry) => entry.group === 'concepts' || entry.id === 'cache');
+  it.each(core)('$id shows a measurable improvement for the alternative', async ({ id }) => {
+    const challenge = CHALLENGES[id]!;
+    const { lab } = (await loaded.find((topic) => topic.id === id)!.load()).default;
+    const result = compareChallenge(lab!, challenge, true);
+    expect(Number.isFinite(result.baseline)).toBe(true);
+    expect(Number.isFinite(result.choice)).toBe(true);
+    expect(result.improved, JSON.stringify(result)).toBe(true);
+    expect(compareChallenge(lab!, challenge, false).improved).toBe(false);
   });
 });
 

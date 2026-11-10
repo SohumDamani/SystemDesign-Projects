@@ -139,13 +139,13 @@ async function testDiagram(page, where) {
     await play.click();
     await page.getByRole('button', { name: 'Pause', exact: true }).and(page.locator('.diagram-player button')).click();
     const step = page.locator('.diagram-step');
-    if (!(await step.innerText()).includes('Connection 1 of ')) fail(where, 'walkthrough did not show the first connection');
+    if (!/(Connection|Step) 1 of /.test(await step.innerText())) fail(where, 'walkthrough did not show the first connection');
     const next = page.getByRole('button', { name: 'Next step', exact: true });
     if (await next.isEnabled()) {
       await next.click();
-      if (!(await step.innerText()).includes('Connection 2 of ')) fail(where, 'walkthrough did not advance');
+      if (!/(Connection|Step) 2 of /.test(await step.innerText())) fail(where, 'walkthrough did not advance');
       await page.getByRole('button', { name: 'Previous step', exact: true }).click();
-      if (!(await step.innerText()).includes('Connection 1 of ')) fail(where, 'walkthrough did not go back');
+      if (!/(Connection|Step) 1 of /.test(await step.innerText())) fail(where, 'walkthrough did not go back');
     }
   }
 }
@@ -376,6 +376,23 @@ async function testApp(browser, ids) {
 
   // Guest progress, then sign-in, then persistence.
   await page.goto(`${BASE}#/learn/cache`);
+  const step = page.locator('.diagram-step');
+  const nextStep = page.getByRole('button', { name: 'Next step', exact: true });
+  await nextStep.click();
+  await nextStep.click();
+  if (!(await step.innerText()).includes('without querying the database')) fail('cache walkthrough', 'hit path should skip the database');
+  await page.getByRole('button', { name: 'Cache miss', exact: true }).click();
+  for (let i = 0; i < 5; i++) await nextStep.click();
+  if (!(await step.innerText()).includes('stores the value in the cache')) fail('cache walkthrough', 'miss path should finish by filling the cache');
+  const challenge = page.locator('.guided-challenge');
+  await challenge.locator('summary').click();
+  await challenge.getByRole('radio', { name: 'Fetch separately on every miss' }).check();
+  const compare = challenge.getByRole('button', { name: 'Compare with baseline' });
+  await compare.click();
+  if (!(await challenge.getByRole('status').innerText()).includes('did not improve')) fail('challenge', 'baseline should not pass');
+  await challenge.getByRole('radio', { name: 'Share one fetch across concurrent misses' }).check();
+  await compare.click();
+  if (!(await challenge.getByRole('status').innerText()).includes('Challenge complete')) fail('challenge', 'sharing the fetch should pass');
   await page.locator('.lesson-foot button').click();
   await page.goto(`${BASE}#/signin`);
   await page.locator('form button[type=submit]').click();
@@ -387,6 +404,16 @@ async function testApp(browser, ids) {
   await page.locator('.side-user').waitFor();
   const done = await page.locator('.side-progress span').innerText();
   if (!done.startsWith('1 of')) fail('progress', `after sign-in and reload: "${done}"`);
+  const progress = page.locator('.learning-progress');
+  if (!(await progress.innerText()).includes(`1 of ${ids.length} lessons completed`)) fail('progress', 'home should show the completed lesson');
+  const continueLink = progress.getByRole('link', { name: /^Continue learning/ });
+  if ((await continueLink.getAttribute('href')) !== '#/learn/queueing') fail('progress', 'should suggest the next unfinished lesson');
+  await page.goto(`${BASE}#/learn/cache`);
+  if (!(await challenge.locator('summary').innerText()).includes('Completed')) fail('challenge', 'completion did not survive sign-in and reload');
+  await page.goto(`${BASE}#/learn/chat`);
+  await page.locator('.lesson-foot').waitFor();
+  await page.goto(`${BASE}#/`);
+  if ((await continueLink.getAttribute('href')) !== '#/learn/chat') fail('progress', 'should resume the most recently visited unfinished lesson');
   await page.locator('.side-user button').click();
   await page.locator('a.btn', { hasText: 'Sign in' }).waitFor();
 

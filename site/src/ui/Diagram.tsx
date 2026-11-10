@@ -28,6 +28,7 @@ export function Diagram({ spec }: { spec: DiagramSpec }) {
   const [step, setStep] = useState<number | null>(null);
   const [playing, setPlaying] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [scenarioIndex, setScenarioIndex] = useState(0);
   const arrowId = useId();
   const activeArrowId = useId();
   const viewport = useRef<HTMLDivElement>(null);
@@ -39,9 +40,13 @@ export function Diagram({ spec }: { spec: DiagramSpec }) {
   const byId = new Map(spec.nodes.map((n) => [n.id, n]));
   const notes = spec.nodes.filter((n) => n.note);
   const focused = focus ? byId.get(focus) : null;
-  const lastStep = spec.edges.length - 1;
-  const active = step === null ? undefined : spec.edges[step];
-  const target = active && byId.get(active.to);
+  const scenario = spec.scenarios?.[scenarioIndex];
+  const lastStep = (scenario?.steps.length ?? spec.edges.length) - 1;
+  const scene = step === null ? undefined : scenario?.steps[step];
+  const activeIndex = scene?.edge ?? step;
+  const active = activeIndex === null ? undefined : spec.edges[activeIndex];
+  const source = active && byId.get(scene?.reverse ? active.to : active.from);
+  const target = active && byId.get(scene?.reverse ? active.from : active.to);
 
   useEffect(() => {
     if (!playing || step === null) return;
@@ -88,16 +93,17 @@ export function Diagram({ spec }: { spec: DiagramSpec }) {
             const b = byId.get(e.to)!;
             const ca = centre(a.col, a.row);
             const cb = centre(b.col, b.row);
-            const p1 = edgePoint(ca, cb);
-            const p2 = edgePoint(cb, ca);
-            const selected = i === step;
+            const selected = i === activeIndex;
+            const reverse = selected && scene?.reverse;
+            const p1 = reverse ? edgePoint(cb, ca) : edgePoint(ca, cb);
+            const p2 = reverse ? edgePoint(ca, cb) : edgePoint(cb, ca);
             return (
               <g key={i}>
                 <line ref={selected ? activeLine : undefined} x1={p1.x} y1={p1.y} x2={p2.x} y2={p2.y}
                   stroke={selected ? 'var(--accent)' : 'var(--ink-2)'} strokeWidth={selected ? 2.4 : 1.2}
                   strokeDasharray={e.dashed ? '4 3' : undefined} markerEnd={`url(#${selected ? activeArrowId : arrowId})`} />
                 {selected && (
-                  <circle className="diagram-packet" cx={p1.x} cy={p1.y} r="4"
+                  <circle key={step} className="diagram-packet" cx={p1.x} cy={p1.y} r="4"
                     data-playing={playing}
                     style={{ '--packet-x': `${p2.x - p1.x}px`, '--packet-y': `${p2.y - p1.y}px` } as CSSProperties} />
                 )}
@@ -136,6 +142,19 @@ export function Diagram({ spec }: { spec: DiagramSpec }) {
       <figcaption>
         {lastStep >= 0 && (
           <div className="diagram-player">
+            {spec.scenarios && (
+              <div className="row diagram-scenarios" role="group" aria-label="Choose a scenario">
+                {spec.scenarios.map(({ title }, index) => (
+                  <button key={title} type="button" aria-pressed={index === scenarioIndex} onClick={() => {
+                    if (index === scenarioIndex) return;
+                    setScenarioIndex(index);
+                    setPlaying(false);
+                    setFinished(false);
+                    setStep(null);
+                  }}>{title}</button>
+                ))}
+              </div>
+            )}
             <div className="row" role="group" aria-label="Walkthrough controls">
               <button type="button" className="btn" onClick={() => {
                 if (playing) {
@@ -152,9 +171,9 @@ export function Diagram({ spec }: { spec: DiagramSpec }) {
             <p className="diagram-step" aria-live={playing ? 'off' : 'polite'}>
               {active && step !== null ? (
                 <>
-                  <span className="muted small">Connection {step + 1} of {spec.edges.length}</span>
-                  <strong>{byId.get(active.from)?.label} → {target?.label}{active.label && ` · ${active.label}`}</strong>
-                  {target?.note && <span>{target.note}</span>}
+                  <span className="muted small">{scenario ? `Step ${step + 1} of ${lastStep + 1} · ${scenario.title}` : `Connection ${step + 1} of ${lastStep + 1}`}</span>
+                  <strong>{source?.label} → {target?.label}{!scenario && active.label && ` · ${active.label}`}</strong>
+                  <span>{scene?.caption ?? target?.note}</span>
                 </>
               ) : 'Play or step through the connections to see how the components interact.'}
             </p>

@@ -137,6 +137,7 @@ export type DiagramNode = {
 export interface DiagramSpec {
   nodes: DiagramNode[];
   edges: { from: string; to: string; label?: string; dashed?: boolean }[];
+  scenarios?: { title: string; steps: { edge: number; reverse?: boolean; caption: string }[] }[];
 }
 
 export interface Topic {

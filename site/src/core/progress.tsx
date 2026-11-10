@@ -6,7 +6,9 @@ import { supabase } from './auth';
 // service, keeping `user`, `signIn` and `signOut` the same for the rest of the app.
 export interface LessonProgress {
   visited?: boolean;
+  lastVisitedAt?: number;
   completed?: boolean;
+  challengeCompleted?: boolean;
   /** Experiment index mapped to whether the learner predicted correctly. */
   experiments?: Record<number, boolean>;
 }
@@ -20,11 +22,28 @@ interface ProgressValue {
   markVisited(id: string): void;
   setCompleted(id: string, done: boolean): void;
   recordExperiment(id: string, index: number, correct: boolean): void;
+  completeChallenge(id: string): void;
   resetProgress(): void;
 }
 
 const USER_KEY = 'sdl:user';
 const keyFor = (name: string | undefined) => `sdl:progress:${name ?? 'guest'}`;
+
+function mergeProgress(guest: Record<string, LessonProgress>, saved: Record<string, LessonProgress>) {
+  const merged = { ...guest, ...saved };
+  for (const [id, profile] of Object.entries(saved)) {
+    const current = guest[id];
+    if (!current || !profile) continue;
+    merged[id] = {
+      ...current,
+      ...profile,
+      lastVisitedAt: Math.max(current.lastVisitedAt ?? 0, profile.lastVisitedAt ?? 0),
+      challengeCompleted: Boolean(current.challengeCompleted || profile.challengeCompleted),
+      experiments: { ...current.experiments, ...profile.experiments },
+    };
+  }
+  return merged;
+}
 
 function read<T>(key: string, fallback: T): T {
   try {
@@ -97,7 +116,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         }
         // A guest's progress carries over into a new profile.
         const existing = read<Record<string, LessonProgress>>(keyFor(name), {});
-        setLessons((guest) => ({ ...guest, ...existing }));
+        setLessons((guest) => mergeProgress(guest, existing));
         setUser(next);
       },
       async signInGoogle() {
@@ -118,9 +137,13 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         setUser(null);
         setLessons(read(keyFor(undefined), {}));
       },
-      markVisited: (id) => patch(id, (p) => (p.visited ? p : { ...p, visited: true })),
+      markVisited: (id) => {
+        const lastVisitedAt = Date.now();
+        patch(id, (p) => ({ ...p, visited: true, lastVisitedAt }));
+      },
       setCompleted: (id, done) => patch(id, (p) => ({ ...p, completed: done })),
       recordExperiment: (id, index, correct) => patch(id, (p) => ({ ...p, experiments: { ...p.experiments, [index]: correct } })),
+      completeChallenge: (id) => patch(id, (p) => ({ ...p, challengeCompleted: true })),
       resetProgress: () => {
         setLessons({});
         try {

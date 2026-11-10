@@ -59,7 +59,7 @@ const lab: Lab<S, P> = {
     s.hitRate = s.hitRate * 0.97 + (total ? s.tick.hits / total : 0) * 0.03;
     s.dbLoad = s.dbLoad * 0.9 + (s.tick.dbReads / DT) * 0.1;
   },
-  sample: (s, p) => ({ hit: s.hitRate * 100, bestHit: zipfTopShare(p.capacity, KEYS, p.skew) * 100, db: s.dbLoad, dbCap: p.dbCapacity }),
+  sample: (s, p) => ({ hit: s.hitRate * 100, bestHit: zipfTopShare(p.capacity, KEYS, p.skew) * 100, db: s.dbLoad, dbCap: p.dbCapacity, hotReads: s.lastHot }),
   charts: [
     { title: 'Hit rate', unit: '%', series: [{ key: 'hit', label: 'Measured', role: 'measured' }, { key: 'bestHit', label: 'Best possible', role: 'predicted' }] },
     { title: 'Database load', unit: 'req/s', series: [{ key: 'db', label: 'Measured', role: 'measured' }, { key: 'dbCap', label: 'Capacity', role: 'predicted' }] },
@@ -170,8 +170,21 @@ const topic: Topic = {
       { id: 'd', label: 'Database', col: 1, row: 1, kind: 'store', note: 'The source of truth. Slower, and much harder to scale for reads.' },
     ],
     edges: [
-      { from: 'a', to: 'c', label: '1. get' },
-      { from: 'a', to: 'd', label: '2. on miss' },
+      { from: 'a', to: 'c' },
+      { from: 'a', to: 'd' },
+    ],
+    scenarios: [
+      { title: 'Cache hit', steps: [
+        { edge: 0, caption: 'The app asks the cache for the key.' },
+        { edge: 0, reverse: true, caption: 'The cache has the value. The app returns it without querying the database.' },
+      ] },
+      { title: 'Cache miss', steps: [
+        { edge: 0, caption: 'The app asks the cache for the key.' },
+        { edge: 0, reverse: true, caption: 'The cache reports that the key is missing or expired.' },
+        { edge: 1, caption: 'The app queries the database for the value.' },
+        { edge: 1, reverse: true, caption: 'The database returns the value to the app.' },
+        { edge: 0, caption: 'The app stores the value in the cache and serves the caller. The next read can be a hit.' },
+      ] },
     ],
   },
   ideas: [

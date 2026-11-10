@@ -56,6 +56,16 @@ export function Home() {
   const { lessons, user } = useProgress();
   const [lab, setLab] = useState<Lab | null>(null);
   const [level, setLevel] = useState<Level | 'all'>('all');
+  const completed = CATALOG.filter((entry) => lessons[entry.id]?.completed).length;
+  const recent = CATALOG.reduce<(typeof CATALOG)[number] | undefined>((latest, entry) => {
+    const progress = lessons[entry.id];
+    if (!progress?.visited && !progress?.completed) return latest;
+    if (!latest || (progress.lastVisitedAt ?? 0) >= (lessons[latest.id]?.lastVisitedAt ?? 0)) return entry;
+    return latest;
+  }, undefined);
+  const nextLesson = recent && (!lessons[recent.id]?.completed ? recent
+    : CATALOG.find((entry, index) => index > CATALOG.indexOf(recent) && !lessons[entry.id]?.completed)
+      ?? CATALOG.find((entry) => !lessons[entry.id]?.completed));
 
   useEffect(() => {
     document.title = 'System Design Lab';
@@ -80,6 +90,28 @@ export function Home() {
         </div>
         {lab && <HeroLab lab={lab} />}
       </section>
+
+      {(recent || user) && (
+        <section className="learning-progress" aria-labelledby="learning-progress-heading">
+          <div>
+            <h2 id="learning-progress-heading">Your progress</h2>
+            <p>{completed} of {CATALOG.length} lessons completed</p>
+            {nextLesson && (
+              <Link className="btn" to={`/learn/${nextLesson.id}`}>
+                Continue learning: {nextLesson.title}
+              </Link>
+            )}
+            {!recent && <Link className="btn" to="/start">Start learning</Link>}
+          </div>
+          <ul className="group-progress">
+            {GROUPS.map((group) => {
+              const entries = CATALOG.filter((entry) => entry.group === group.id);
+              const done = entries.filter((entry) => lessons[entry.id]?.completed).length;
+              return <li key={group.id}><span>{group.title}</span><span>{done} / {entries.length}</span></li>;
+            })}
+          </ul>
+        </section>
+      )}
 
       <section className="method">
         <div>
