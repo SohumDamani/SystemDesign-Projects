@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { CATALOG, GROUPS } from '../topics/catalog';
 import { GUIDE, LEVEL_LABEL, type Level } from '../topics/guide';
+import { setMeta } from '../core/meta';
 import { useProgress } from '../core/progress';
 import type { Lab } from '../core/types';
 import { Chart } from '../ui/Chart';
@@ -40,6 +41,7 @@ function HeroLab({ lab }: { lab: Lab }) {
           </div>
         ))}
       </details>
+      <p className="hero-caption small muted">Each request is a person queueing for one of three servers. Switch how they're routed, kill a server, and watch the queue.</p>
       <Chart spec={lab.charts[0]} history={history} secondsPerTick={lab.secondsPerTick} />
       <div className="hero-foot">
         <button onClick={() => sim.act('kill-a')}>{serverA?.up === false ? 'Restore server A' : 'Kill server A'}</button>
@@ -68,7 +70,7 @@ export function Home() {
       ?? CATALOG.find((entry) => !lessons[entry.id]?.completed));
 
   useEffect(() => {
-    document.title = 'System Design Lab';
+    setMeta();
     import('../topics/load-balancer/index').then((m) => setLab(m.default.lab ?? null));
   }, []);
 
@@ -80,11 +82,17 @@ export function Home() {
           <h1>Don't just describe the system. Run it.</h1>
           <p className="lede">Most system design guides teach you what to say. Here you can also estimate the load, read the code, change the parameters, and break the thing, right in your browser.</p>
           <div className="row">
-            <Link className="btn" to="/start">
-              Choose a learning path
-            </Link>
-            <Link className="ghost btn-ghost" to="/learn/rate-limiter">
-              Try a lab now
+            {nextLesson ? (
+              <Link className="btn" to={`/learn/${nextLesson.id}`}>
+                Continue: {nextLesson.title}
+              </Link>
+            ) : (
+              <Link className="btn" to="/start">
+                Choose a learning path
+              </Link>
+            )}
+            <Link className="ghost btn-ghost" to={nextLesson ? '/start' : '/learn/rate-limiter'}>
+              {nextLesson ? 'Learning paths' : 'Try a lab now'}
             </Link>
           </div>
         </div>
@@ -163,7 +171,8 @@ export function Home() {
                       <span>{e.tagline}</span>
                     </span>
                     <span className="catalog-state">
-                      {p?.completed ? 'Done' : tried ? `${tried} tried` : p?.visited ? 'Started' : <span className={'level level-' + GUIDE[e.id]?.level}>{GUIDE[e.id] ? LEVEL_LABEL[GUIDE[e.id].level] : ''}</span>}
+                      {p?.completed ? 'Done' : tried ? `${tried} tried` : p?.visited ? 'Started' : null}
+                      {GUIDE[e.id] && <span className={'level level-' + GUIDE[e.id].level}>{LEVEL_LABEL[GUIDE[e.id].level]}</span>}
                     </span>
                   </Link>
                 </li>

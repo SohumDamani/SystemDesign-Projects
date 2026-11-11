@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { CATALOG, GROUPS } from './topics/catalog';
+import { setMeta } from './core/meta';
 import { useProgress } from './core/progress';
 import { Glossary } from './pages/Glossary';
 import { Home } from './pages/Home';
@@ -38,15 +39,24 @@ function statusOf(p?: { visited?: boolean; completed?: boolean; experiments?: Re
   return 'none';
 }
 
+const STATUS_TEXT = { none: '', started: 'started', done: 'done' } as const;
+
 function Sidebar({ open, onClose }: { open: boolean; onClose(): void }) {
   const { lessons, user, signOut } = useProgress();
   const [query, setQuery] = useState('');
   const [theme, toggleTheme] = useTheme();
+  const searchRef = useRef<HTMLInputElement>(null);
   const q = query.trim().toLowerCase();
   const done = useMemo(() => CATALOG.filter((e) => lessons[e.id]?.completed).length, [lessons]);
+  const matches = CATALOG.filter((e) => !q || e.title.toLowerCase().includes(q) || e.tagline.toLowerCase().includes(q));
+
+  // On a phone the drawer opens over the page, so put the keyboard in the search box.
+  useEffect(() => {
+    if (open) searchRef.current?.focus({ preventScroll: true });
+  }, [open]);
 
   return (
-    <aside className={'sidebar' + (open ? ' open' : '')} aria-label="Lessons">
+    <aside id="sidebar" className={'sidebar' + (open ? ' open' : '')} aria-label="Lessons">
       <div className="side-head">
         <Link to="/" className="brand" onClick={onClose}>
           <svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">
@@ -59,7 +69,7 @@ function Sidebar({ open, onClose }: { open: boolean; onClose(): void }) {
         </button>
       </div>
       <div className="side-progress">
-        <div className="meter" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={CATALOG.length} aria-label="Lessons completed">
+        <div className="meter" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={CATALOG.length} aria-valuetext={`${done} of ${CATALOG.length} lessons done`} aria-label="Lessons completed">
           <div style={{ width: `${(done / CATALOG.length) * 100}%` }} />
         </div>
         <span>
@@ -74,20 +84,33 @@ function Sidebar({ open, onClose }: { open: boolean; onClose(): void }) {
           Glossary
         </NavLink>
       </div>
-      <input className="side-search" type="search" placeholder="Find a lesson" aria-label="Find a lesson" value={query} onChange={(e) => setQuery(e.target.value)} />
+      <input ref={searchRef} className="side-search" type="search" placeholder="Find a lesson" aria-label="Find a lesson" value={query} onChange={(e) => setQuery(e.target.value)} />
       <nav className="side-nav">
+        {matches.length === 0 && (
+          <p className="side-empty small muted" role="status">
+            No lessons match “{query.trim()}”.{' '}
+            <button className="link-button" onClick={() => setQuery('')}>
+              Clear search
+            </button>{' '}
+            or try the <Link to="/glossary" onClick={onClose}>glossary</Link>.
+          </p>
+        )}
         {GROUPS.map((g) => {
-          const items = CATALOG.filter((e) => e.group === g.id && (!q || e.title.toLowerCase().includes(q) || e.tagline.toLowerCase().includes(q)));
+          const items = matches.filter((e) => e.group === g.id);
           if (!items.length) return null;
           return (
             <div key={g.id} className="side-group">
               <h2>{g.title}</h2>
-              {items.map((e) => (
-                <NavLink key={e.id} to={`/learn/${e.id}`} onClick={onClose} className={({ isActive }) => 'side-link' + (isActive ? ' active' : '')}>
-                  <span className={'status ' + statusOf(lessons[e.id])} aria-hidden="true" />
-                  <span>{e.title.replace(/^Design (a |an )?/, '').replace(/^./, (c) => c.toUpperCase())}</span>
-                </NavLink>
-              ))}
+              {items.map((e) => {
+                const status = statusOf(lessons[e.id]);
+                return (
+                  <NavLink key={e.id} to={`/learn/${e.id}`} onClick={onClose} className={({ isActive }) => 'side-link' + (isActive ? ' active' : '')}>
+                    <span className={'status ' + status} aria-hidden="true" />
+                    <span>{e.title.replace(/^Design (a |an )?/, '').replace(/^./, (c) => c.toUpperCase())}</span>
+                    {status !== 'none' && <span className="sr-only">, {STATUS_TEXT[status]}</span>}
+                  </NavLink>
+                );
+              })}
             </div>
           );
         })}
@@ -115,16 +138,25 @@ function Sidebar({ open, onClose }: { open: boolean; onClose(): void }) {
 
 export function App() {
   const [menu, setMenu] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
   const { pathname } = useLocation();
+  const firstRender = useRef(true);
   useEffect(() => {
     window.scrollTo(0, 0);
     // Pages that set their own title do so after this runs.
-    if (pathname === '/signin') document.title = 'Sign in | System Design Lab';
-    else if (!/^\/(learn\/|glossary|start)|^\/$/.test(pathname)) document.title = 'Page not found | System Design Lab';
+    if (pathname === '/signin') setMeta('Sign in');
+    else if (!/^\/(learn\/|glossary|start)|^\/$/.test(pathname)) setMeta('Page not found');
+    // Moving focus to the new page tells screen readers it changed. Not on first load, so the page starts at the top.
+    if (firstRender.current) firstRender.current = false;
+    else document.getElementById('main')?.focus({ preventScroll: true });
   }, [pathname]);
+  const closeMenu = () => {
+    setMenu(false);
+    menuButton.current?.focus();
+  };
   useEffect(() => {
     if (!menu) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setMenu(false);
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && closeMenu();
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [menu]);
@@ -142,16 +174,16 @@ export function App() {
         Skip to content
       </a>
       <header className="topbar">
-        <button className="ghost" onClick={() => setMenu(true)}>
+        <button ref={menuButton} className="ghost" onClick={() => setMenu(true)} aria-expanded={menu} aria-controls="sidebar">
           Lessons
         </button>
         <Link to="/" className="brand">
           System Design Lab
         </Link>
       </header>
-      <Sidebar open={menu} onClose={() => setMenu(false)} />
-      {menu && <div className="scrim" onClick={() => setMenu(false)} aria-hidden="true" />}
-      <main className="main" id="main" tabIndex={-1}>
+      <Sidebar open={menu} onClose={closeMenu} />
+      {menu && <div className="scrim" onClick={closeMenu} aria-hidden="true" />}
+      <main className="main" id="main" tabIndex={-1} inert={menu || undefined}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/learn/:id" element={<Lesson />} />

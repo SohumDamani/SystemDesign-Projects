@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { entryFor, neighbors } from '../topics/catalog';
 import { GUIDE, LEVEL_LABEL } from '../topics/guide';
 import { PRIMER_REFERENCES } from '../topics/primerReferences';
+import { setMeta } from '../core/meta';
 import { useProgress } from '../core/progress';
 import type { Topic } from '../core/types';
 import { CodePanel } from '../ui/Code';
@@ -18,13 +19,61 @@ function loaderFor(id: string) {
   return modules[`../topics/${id}/index.ts`] ?? modules[`../topics/${id}/index.tsx`];
 }
 
+const INTRO_KEY = 'sdl:intros';
+
+/** Experienced readers can hide the plain-English intro on every lesson, and bring it back any time. */
+function useIntroPref(): [boolean, (show: boolean) => void] {
+  const [shown, setShown] = useState(() => {
+    try {
+      return localStorage.getItem(INTRO_KEY) !== 'hide';
+    } catch {
+      return true;
+    }
+  });
+  const set = (show: boolean) => {
+    setShown(show);
+    try {
+      localStorage.setItem(INTRO_KEY, show ? 'show' : 'hide');
+    } catch {
+      // Blocked storage: the choice lasts for this visit.
+    }
+  };
+  return [shown, set];
+}
+
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 export function Lesson() {
   const { id = '' } = useParams();
   const entry = entryFor(id);
   const [topic, setTopic] = useState<Topic | null>(null);
   const [failed, setFailed] = useState(false);
+  const [active, setActive] = useState('understand');
+  const [introShown, setIntroShown] = useIntroPref();
   const { lessons, markVisited, setCompleted } = useProgress();
   const refs = useRef<Record<string, HTMLElement | null>>({});
+
+  // Highlight the section nav as the reader scrolls.
+  useEffect(() => {
+    if (!topic || !('IntersectionObserver' in window)) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.find((e) => e.isIntersecting);
+        if (hit) setActive((hit.target as HTMLElement).dataset.section ?? 'understand');
+      },
+      { rootMargin: '-40% 0px -55% 0px' },
+    );
+    Object.values(refs.current).forEach((el) => el && observer.observe(el));
+    return () => observer.disconnect();
+  }, [topic]);
+
+  const jumpTo = (key: string) => {
+    const el = refs.current[key];
+    if (!el) return;
+    el.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    el.focus({ preventScroll: true });
+    setActive(key);
+  };
 
   useEffect(() => {
     setTopic(null);
@@ -43,7 +92,7 @@ export function Lesson() {
         if (live) setFailed(true);
       });
     markVisited(id);
-    if (entry) document.title = `${entry.title} | System Design Lab`;
+    setMeta(entry.title, `${entry.tagline} Real here: ${entry.real}. ${LEVEL_LABEL[GUIDE[id]?.level ?? 'intermediate']} lesson in System Design Lab.`);
     return () => {
       live = false;
     };
@@ -51,16 +100,21 @@ export function Lesson() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, entry]);
 
-  if (!entry || failed) {
+  const guide = GUIDE[id];
+
+  if (!entry || !guide || failed) {
+    const known = Boolean(entry && guide);
     return (
       <div className="page narrow">
-        <h1>{entry ? "Couldn't load this lesson" : "That lesson doesn't exist"}</h1>
-        <p>{entry ? 'Your connection may have dropped, or the site was just updated. Reloading usually fixes it.' : "This lesson doesn't exist."}</p>
+        <h1>{known ? "Couldn't load this lesson" : "That lesson doesn't exist"}</h1>
+        <p>{known ? 'Your connection may have dropped, or the site was just updated. Reloading usually fixes it.' : 'The link may be old or mistyped. Use the Lessons menu to search, or pick a learning path to start from.'}</p>
         <div className="row">
-          {entry && (
+          {known ? (
             <button className="btn" onClick={() => location.reload()}>
               Reload the page
             </button>
+          ) : (
+            <Link className="btn" to="/start">Choose a learning path</Link>
           )}
           <Link to="/">Go to all lessons</Link>
         </div>
@@ -70,7 +124,6 @@ export function Lesson() {
 
   const { prev, next } = neighbors(id);
   const done = Boolean(lessons[id]?.completed);
-  const guide = GUIDE[id];
   const references = [...(topic?.references ?? []), ...(PRIMER_REFERENCES[id] ?? [])];
   const sections = topic
     ? [
@@ -89,40 +142,64 @@ export function Lesson() {
         </p>
         <h1>{entry.title}</h1>
         <p className="lede">{entry.tagline}</p>
-        <aside className="plain-english" aria-label="In plain English">
-          <h2>In plain English</h2>
-          <p>{guide.plain}</p>
-          <p className="remember">
-            <b>The one thing to remember:</b> {guide.remember}
-          </p>
-          {guide.before.length > 0 && (
-            <p className="before small">
-              Helpful to read first:{' '}
-              {guide.before.map((b, i) => (
-                <span key={b}>
-                  {i > 0 && ', '}
-                  <Link to={`/learn/${b}`}>{entryFor(b)?.title ?? b}</Link>
-                  {lessons[b]?.completed ? ' (done)' : ''}
-                </span>
-              ))}
+        {introShown ? (
+          <aside className="plain-english" aria-label="In plain English">
+            <div className="plain-english-head">
+              <h2>In plain English</h2>
+              <button className="ghost plain-english-toggle" onClick={() => setIntroShown(false)} title="Hides this intro on every lesson. You can bring it back any time.">
+                Hide intros
+              </button>
+            </div>
+            <p>{guide.plain}</p>
+            <p className="remember">
+              <b>The one thing to remember:</b> {guide.remember}
             </p>
-          )}
-        </aside>
+            {guide.before.length > 0 && (
+              <p className="before small">
+                Helpful to read first:{' '}
+                {guide.before.map((b, i) => (
+                  <span key={b}>
+                    {i > 0 && ', '}
+                    <Link to={`/learn/${b}`}>{entryFor(b)?.title ?? b}</Link>
+                    {lessons[b]?.completed ? ' (done)' : ''}
+                  </span>
+                ))}
+              </p>
+            )}
+          </aside>
+        ) : (
+          <p className="plain-english-hidden small muted">
+            <b>Remember:</b> {guide.remember}{' '}
+            <button className="link-button" onClick={() => setIntroShown(true)}>Show plain-English intros</button>
+          </p>
+        )}
       </header>
 
-      {!topic && <p className="muted">Loading the lesson…</p>}
+      {!topic && (
+        <p className="muted lesson-loading" role="status">
+          Loading the lesson…
+        </p>
+      )}
 
       {topic && (
         <>
           <nav className="lesson-nav" aria-label="Lesson sections">
             {sections.map(([key, label]) => (
-              <button key={key} onClick={() => refs.current[key]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              <a
+                key={key}
+                href={`#/learn/${id}#${key}`}
+                aria-current={active === key ? 'location' : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  jumpTo(key);
+                }}
+              >
                 {label}
-              </button>
+              </a>
             ))}
           </nav>
 
-          <section ref={(el) => void (refs.current.understand = el)} className="lesson-section">
+          <section ref={(el) => void (refs.current.understand = el)} id="understand" data-section="understand" tabIndex={-1} className="lesson-section">
             <h2>Understand the problem</h2>
             <div className="prose">
               {topic.problem.map((p, i) => (
@@ -167,7 +244,7 @@ export function Lesson() {
           </section>
 
           {topic.estimator && (
-            <section ref={(el) => void (refs.current.estimate = el)} className="lesson-section">
+            <section ref={(el) => void (refs.current.estimate = el)} id="estimate" data-section="estimate" tabIndex={-1} className="lesson-section">
               <details key={id} className="calculation-details lesson-calculations">
                 <summary><span className="when-closed">Show calculations</span><span className="when-open">Hide calculations</span></summary>
                 <p className="section-lede">Start with a number you know and see how it affects the rest of the system.</p>
@@ -178,7 +255,7 @@ export function Lesson() {
             </section>
           )}
 
-          <section ref={(el) => void (refs.current.run = el)} className="lesson-section wide">
+          <section ref={(el) => void (refs.current.run = el)} id="run" data-section="run" tabIndex={-1} className="lesson-section wide">
             <h2>{topic.lab ? 'Run it, and try to break it' : 'Practice it'}</h2>
             {topic.lab && <p className="section-lede">Predict what will happen, run it, then see whether the math held. Afterwards, press Resume and change anything you like.</p>}
             <ErrorBoundary what="This lab" resetKey={id}>
@@ -191,7 +268,7 @@ export function Lesson() {
             )}
           </section>
 
-          <section ref={(el) => void (refs.current.interview = el)} className="lesson-section">
+          <section ref={(el) => void (refs.current.interview = el)} id="interview" data-section="interview" tabIndex={-1} className="lesson-section">
             <h2>In the interview</h2>
             <h3 className="sub">Tradeoffs to say out loud</h3>
             <div className="table-wrap">
@@ -262,9 +339,16 @@ export function Lesson() {
           )}
 
           <footer className="lesson-foot">
-            <button className={done ? 'ghost' : 'btn'} onClick={() => setCompleted(id, !done)} aria-pressed={done}>
-              {done ? 'Marked as done. Undo' : 'Mark lesson as done'}
-            </button>
+            <div className="lesson-done">
+              <button className={done ? 'ghost' : 'btn'} onClick={() => setCompleted(id, !done)} aria-pressed={done}>
+                {done ? 'Marked as done. Undo' : 'Mark lesson as done'}
+              </button>
+              {done && next && (
+                <Link className="btn" to={`/learn/${next.id}`}>
+                  Next: {next.title}
+                </Link>
+              )}
+            </div>
             <div className="lesson-pager">
               {prev && (
                 <Link to={`/learn/${prev.id}`}>

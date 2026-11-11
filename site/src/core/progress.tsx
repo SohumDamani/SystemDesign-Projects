@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { supabase } from './auth';
+import type { Session } from '@supabase/supabase-js';
+import { getSupabase } from './auth';
 
 // Profiles and progress live in this browser's localStorage. There's no server and no
 // password. To add real accounts, implement the same context on top of a hosted auth
@@ -70,8 +71,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    if (!supabase) return;
-    const sync = (session: import('@supabase/supabase-js').Session | null, signedOut = false) => {
+    const loading = getSupabase();
+    if (!loading) return;
+    const sync = (session: Session | null, signedOut = false) => {
       if (!session?.user) {
         if (!signedOut) return;
         try { localStorage.removeItem(USER_KEY); } catch { /* storage may be blocked */ }
@@ -86,9 +88,18 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       setUser(next);
       try { localStorage.setItem(USER_KEY, JSON.stringify(next)); } catch { /* storage may be blocked */ }
     };
-    supabase.auth.getSession().then(({ data }) => sync(data.session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => sync(session, event === 'SIGNED_OUT'));
-    return () => subscription.unsubscribe();
+    let live = true;
+    let unsubscribe = () => {};
+    loading.then((supabase) => {
+      if (!live) return;
+      supabase.auth.getSession().then(({ data }) => live && sync(data.session));
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => sync(session, event === 'SIGNED_OUT'));
+      unsubscribe = () => subscription.unsubscribe();
+    });
+    return () => {
+      live = false;
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
@@ -120,7 +131,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         setUser(next);
       },
       async signInGoogle() {
-        if (!supabase) return 'Google sign-in is not configured yet.';
+        const loading = getSupabase();
+        if (!loading) return 'Google sign-in is not configured yet.';
+        const supabase = await loading;
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: { redirectTo: `${window.location.origin}${window.location.pathname}#/signin` },
@@ -128,7 +141,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
         return error?.message ?? null;
       },
       signOut() {
-        if (user?.google && supabase) void supabase.auth.signOut();
+        if (user?.google) void getSupabase()?.then((supabase) => supabase.auth.signOut());
         try {
           localStorage.removeItem(USER_KEY);
         } catch {

@@ -329,7 +329,7 @@ async function testLesson(context, id, stats) {
   try {
     await open(page, id);
     await checkText(page, 'main', where);
-    for (const section of await page.locator('.lesson-nav button').all()) await section.click();
+    for (const section of await page.locator('.lesson-nav a').all()) await section.click();
     await testEstimator(page, where);
     await testDiagram(page, where);
     await testCodeTabs(page, where);

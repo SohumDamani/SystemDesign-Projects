@@ -292,7 +292,7 @@ export const TRACKS: Track[] = [
     title: 'New to system design',
     who: 'You can code, but "shard" and "QPS" are new words',
     description: 'Start from one server, and build up the vocabulary one lab at a time. No prior distributed systems knowledge needed, though the last few lessons are a step up.',
-    lessons: ['scale', 'load-balancer', 'cache', 'estimation', 'queueing', 'url-shortener', 'rate-limiter', 'bloom-filter', 'replication', 'consistent-hashing', 'sharding', 'framework'],
+    lessons: ['scale', 'load-balancer', 'cache', 'estimation', 'framework', 'queueing', 'url-shortener', 'rate-limiter', 'bloom-filter', 'replication', 'consistent-hashing', 'sharding'],
   },
   {
     id: 'interview',

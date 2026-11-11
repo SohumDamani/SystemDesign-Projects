@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Lab, ParamDef, PseudoLine, SourceFile } from '../core/types';
 import type { CatalogEntry } from '../topics/catalog';
 import { fmtDuration } from '../core/format';
@@ -109,13 +109,24 @@ export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry
   const results = lessons[entry.id]?.experiments ?? {};
   const View = lab.View;
   const challenge = CHALLENGES[entry.id];
+  const predicting = exp !== null && !activeRun;
+
+  // A prediction is only a prediction if the answer isn't already on screen. So while an
+  // experiment is open and not yet started, the lab waits at zero instead of running ahead.
+  useEffect(() => {
+    if (openExp === null) return;
+    sim.reset();
+    sim.setRunning(false);
+    // Only when the open experiment changes, not on every tick.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openExp]);
 
   return (
     <div className="console" ref={sim.containerRef}>
       <div className="console-bar">
         <div className="console-status">
           <span className={'pulse' + (sim.running && !run?.done ? ' on' : '')} aria-hidden="true" />
-          <span>{sim.running ? 'Running' : 'Paused'}</span>
+          <span>{sim.running ? 'Running' : predicting && tick === 0 ? 'Waiting for your prediction' : 'Paused'}</span>
           <span className="muted">t = {fmtDuration(tick * lab.secondsPerTick)}</span>
         </div>
         <div className="console-actions">
@@ -161,6 +172,7 @@ export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry
             <p className="exp-question">
               <Rich text={exp.question} />
             </p>
+            {predicting && <p className="muted small">Pick an answer and the lab runs. Or press Resume to explore freely first.</p>}
             <div className="exp-options">
               {exp.options.map((o, i) => {
                 const picked = activeRun?.choice === i;

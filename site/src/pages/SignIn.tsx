@@ -43,7 +43,12 @@ export function SignIn() {
   return (
     <div className="page narrow">
       <h1>Sign in</h1>
-      <p>Use Google or create a local profile to keep track of lessons and experiments. Your guest progress comes with you.</p>
+      <p>
+        {authConfigured
+          ? 'Use Google or create a local profile to keep track of lessons and experiments. Your guest progress comes with you.'
+          : 'Your progress is already saved on this device. A profile just puts a name on it, so several people can share one browser. Your guest progress comes with you.'}
+      </p>
+      {authConfigured && (
       <section className="auth-flow" aria-label="How Google sign-in works">
         <p className="eyebrow">HOW GOOGLE SIGN-IN WORKS</p>
         <div className="auth-flow-track">
@@ -56,7 +61,9 @@ export function SignIn() {
         </div>
         <p className="muted small">Your password stays with Google. The lab receives a sign-in confirmation.</p>
       </section>
-      <button className="google-button wide" type="button" disabled={!authConfigured || busy} onClick={async () => {
+      )}
+      {authConfigured && (
+      <button className="google-button wide" type="button" disabled={busy} onClick={async () => {
         setBusy(true); setError('');
         try {
           const message = await signInGoogle();
@@ -68,10 +75,10 @@ export function SignIn() {
         }
       }}>
         <span className="google-mark" aria-hidden="true">G</span>
-        {busy ? 'Connecting to Google…' : authConfigured ? 'Continue with Google' : 'Google sign-in setup required'}
+        {busy ? 'Connecting to Google…' : 'Continue with Google'}
       </button>
-      {!authConfigured && <p className="muted small">Google sign-in will be available when the site owner connects its authentication settings.</p>}
-      <div className="auth-divider"><span>or use a local profile</span></div>
+      )}
+      {authConfigured && <div className="auth-divider"><span>or use a local profile</span></div>}
       <form onSubmit={submit} className="form" noValidate>
         <label htmlFor="profile-name">Profile name</label>
         <input

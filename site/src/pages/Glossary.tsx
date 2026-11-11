@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { GLOSSARY } from '../topics/glossary';
 import { entryFor } from '../topics/catalog';
+import { setMeta } from '../core/meta';
 
 export function Glossary() {
   const [params] = useSearchParams();
@@ -10,7 +11,7 @@ export function Glossary() {
   const focusRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = 'Glossary | System Design Lab';
+    setMeta('Glossary', `${GLOSSARY.length} system design terms explained in plain English, each linked to the lesson where you can see it run.`);
   }, []);
 
   useEffect(() => {

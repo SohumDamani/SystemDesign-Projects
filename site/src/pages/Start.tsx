@@ -2,13 +2,14 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { entryFor } from '../topics/catalog';
 import { GUIDE, LEVEL_LABEL, TRACKS } from '../topics/guide';
+import { setMeta } from '../core/meta';
 import { useProgress } from '../core/progress';
 
 export function Start() {
   const { lessons } = useProgress();
 
   useEffect(() => {
-    document.title = 'Start here | System Design Lab';
+    setMeta('Start here', 'Three learning paths through 43 runnable system design lessons: new to system design, interview in two weeks, or already experienced.');
   }, []);
 
   return (
@@ -49,7 +50,7 @@ export function Start() {
                 <p className="muted">{track.who}</p>
               </header>
               <p>{track.description}</p>
-              <div className="meter" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={track.lessons.length} aria-label={`${track.title} progress`}>
+              <div className="meter" role="progressbar" aria-valuenow={done} aria-valuemin={0} aria-valuemax={track.lessons.length} aria-valuetext={`${done} of ${track.lessons.length} lessons done`} aria-label={`${track.title} progress`}>
                 <div style={{ width: `${(done / track.lessons.length) * 100}%` }} />
               </div>
               <p className="small muted">
@@ -68,7 +69,7 @@ export function Start() {
                   return (
                     <li key={id} className={complete ? 'complete' : undefined}>
                       <Link to={`/learn/${id}`}>{entry.title}</Link>
-                      <span className={'level level-' + GUIDE[id].level}>{complete ? 'Done' : LEVEL_LABEL[GUIDE[id].level]}</span>
+                      <span className={'level level-' + GUIDE[id]?.level}>{complete ? 'Done' : GUIDE[id] ? LEVEL_LABEL[GUIDE[id].level] : ''}</span>
                     </li>
                   );
                 })}
