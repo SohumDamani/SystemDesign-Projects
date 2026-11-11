@@ -11,12 +11,6 @@ import { App } from './App';
 import { ProgressProvider } from './core/progress';
 import { ErrorBoundary } from './ui/ErrorBoundary';
 
-// A clean link like /start or /learn/cache should land on that page, not silently on Home.
-// The site is static files, so routes live after the hash; this turns one form into the other.
-const base = import.meta.env.BASE_URL.replace(/\/$/, '');
-const extra = location.pathname.startsWith(base) ? location.pathname.slice(base.length) : '';
-if (extra && extra !== '/' && !location.hash) history.replaceState(null, '', `${base}/#${extra}${location.search}`);
-
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <HashRouter>

@@ -16,6 +16,18 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23161a1d'/%3E%3Cpath d='M5 22l6-8 5 5 5-11 6 14' fill='none' stroke='%234aa3ff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E" />
   </head>
   <body>
+    <script>
+      // A clean link like /start or /learn/cache should land on that page, not on Home.
+      // Routes live after the hash, since the site is static files. GitHub Pages serves this
+      // file as 404.html for unknown paths, so this sends the path into the hash and reloads from the site root.
+      (function () {
+        var segments = location.pathname.split('/').filter(Boolean);
+        var onPages = /\.github\.io$/.test(location.hostname);
+        var root = onPages && segments.length ? '/' + segments[0] + '/' : '/';
+        var rest = location.pathname.slice(root.length);
+        if (rest && !location.hash) location.replace(root + '#/' + rest + location.search);
+      })();
+    </script>
     <div id="root"></div>
     <noscript>System Design Lab runs its labs in your browser, so it needs JavaScript. Please turn it on and reload.</noscript>
     <script type="module" src="/src/main.tsx"></script>
