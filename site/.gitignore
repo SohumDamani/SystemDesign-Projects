@@ -3,3 +3,9 @@ dist/
 *.tsbuildinfo
 .vitest/
 .agent-tmp/
+
+# local env files
+.env
+.env.*
+!.env.example
+*.local

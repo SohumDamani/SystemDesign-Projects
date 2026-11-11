@@ -82,7 +82,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       const email = session.user.email ?? undefined;
       const name = (session.user.user_metadata.full_name as string | undefined) || email || 'Google learner';
       const next = { name, email, google: true, accountKey: `google:${session.user.id}` };
-      setLessons((guest) => ({ ...guest, ...read<Record<string, LessonProgress>>(keyFor(next.accountKey), {}) }));
+      setLessons((guest) => mergeProgress(guest, read<Record<string, LessonProgress>>(keyFor(next.accountKey), {})));
       setUser(next);
       try { localStorage.setItem(USER_KEY, JSON.stringify(next)); } catch { /* storage may be blocked */ }
     };

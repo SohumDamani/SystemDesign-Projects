@@ -248,12 +248,12 @@ export function LabRunner({ lab, entry, pseudocode, sources }: { lab: Lab; entry
         </div>
       </div>
 
-      {(lines?.length || sources?.length) && (
+      {(lines?.length || sources?.length) ? (
         <section className="console-code">
           <h3>The code making these decisions</h3>
           <CodePanel pseudocode={lines} sources={sources} trace={trace} note={trace ? 'Values update as the lab runs and show the latest request.' : undefined} />
         </section>
-      )}
+      ) : null}
     </div>
   );
 }
