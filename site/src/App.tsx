@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { CATALOG, GROUPS } from './topics/catalog';
 import { setMeta } from './core/meta';
@@ -8,6 +8,8 @@ import { Home } from './pages/Home';
 import { Lesson } from './pages/Lesson';
 import { SignIn } from './pages/SignIn';
 import { Start } from './pages/Start';
+
+const RateLimiterBuild = lazy(() => import('./pages/RateLimiterBuild').then(({ RateLimiterBuild }) => ({ default: RateLimiterBuild })));
 
 type Theme = 'light' | 'dark';
 
@@ -145,7 +147,7 @@ export function App() {
     window.scrollTo(0, 0);
     // Pages that set their own title do so after this runs.
     if (pathname === '/signin') setMeta('Sign in');
-    else if (!/^\/(learn\/|glossary|start)|^\/$/.test(pathname)) setMeta('Page not found');
+    else if (!/^\/(learn\/|glossary|start)|^\/$/.test(pathname) && pathname !== '/build/rate-limiter') setMeta('Page not found');
     // Moving focus to the new page tells screen readers it changed. Not on first load, so the page starts at the top.
     if (firstRender.current) firstRender.current = false;
     else document.getElementById('main')?.focus({ preventScroll: true });
@@ -187,6 +189,11 @@ export function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/learn/:id" element={<Lesson />} />
+          <Route path="/build/rate-limiter" element={
+            <Suspense fallback={<p className="page" role="status">Loading the challenge.</p>}>
+              <RateLimiterBuild />
+            </Suspense>
+          } />
           <Route path="/signin" element={<SignIn />} />
           <Route path="/start" element={<Start />} />
           <Route path="/glossary" element={<Glossary />} />

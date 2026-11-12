@@ -142,6 +142,7 @@ export function Lesson() {
         </p>
         <h1>{entry.title}</h1>
         <p className="lede">{entry.tagline}</p>
+        {id === 'rate-limiter' && <p><Link className="btn" to="/build/rate-limiter">Build Challenge</Link></p>}
         {introShown ? (
           <aside className="plain-english" aria-label="In plain English">
             <div className="plain-english-head">

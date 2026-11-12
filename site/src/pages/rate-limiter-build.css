@@ -1,0 +1,41 @@
+.build-page { max-width: 1160px; }
+.build-heading h1 { margin: 8px 0 10px; }
+.build-heading p, .build-card p:last-child { margin-bottom: 0; }
+.build-heading { margin-bottom: 24px; }
+.build-card { min-width: 0; padding: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+.build-brief, .build-workspace { margin-bottom: 16px; }
+.build-toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 16px; }
+.build-toolbar label { display: flex; align-items: center; gap: 6px; }
+.build-brief > p, .build-requirements, .build-debrief { margin-top: 12px; }
+.build-requirements li + li { margin-top: 6px; }
+.build-requirements li button + span { display: block; margin-top: 3px; }
+.build-debrief summary { cursor: pointer; width: fit-content; color: var(--accent); }
+.build-debrief p { margin-top: 6px; }
+.build-palette { margin: 12px 0 6px; }
+.build-palette button { min-height: 36px; }
+.build-workspace > p { margin-bottom: 8px; }
+.build-canvas-scroll { overflow: auto; border: 1px solid var(--line-strong); border-radius: var(--radius); background: var(--bg); }
+.build-canvas { position: relative; margin-inline: auto; background: radial-gradient(circle, var(--line-strong) 1px, transparent 1px) 0 0 / 18px 18px; }
+.build-canvas svg { position: absolute; inset: 0; pointer-events: none; color: var(--ink-2); }
+.build-node { position: absolute; transform: translate(-50%, -50%); touch-action: none; cursor: grab; user-select: none; background: var(--surface); font-weight: 600; }
+.build-node:active { cursor: grabbing; }
+.build-node[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); }
+.build-inspector { margin-top: 12px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); }
+.build-field { display: grid; gap: 4px; margin-top: 8px; width: min(100%, 245px); font-size: 14px; }
+.build-connect { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; }
+.build-connect button { min-height: 36px; }
+.build-connections { list-style: none; padding: 0; margin: 10px 0 0; }
+.build-connections li { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; margin-top: 4px; }
+.build-inspector > p { margin-top: 8px; }
+.build-run { margin-top: 12px; }
+.build-run p, .build-results > p { margin: 0; }
+.build-results > h2 { margin-bottom: 8px; }
+.build-checks { display: grid; gap: 8px; margin-top: 8px; }
+.build-stats { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 8px 0; font-size: 14px; }
+.build-stats + p, .build-card h3 + p { margin: 6px 0 0; }
+.build-error { color: var(--bad); }
+.build-pass { color: var(--good); }
+@media (max-width: 600px) {
+  .build-card { padding: 12px; }
+  .build-page .build-toolbar { align-items: flex-start; }
+}

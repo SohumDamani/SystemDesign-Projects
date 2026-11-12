@@ -534,6 +534,57 @@ async function testKeyboard(browser) {
   await context.close();
 }
 
+async function testArchitectureBuild(browser) {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  try {
+    const page = await context.newPage();
+    watch(page, 'architecture build');
+    await open(page, 'rate-limiter');
+    await page.getByRole('link', { name: 'Build Challenge' }).click();
+    await page.getByRole('heading', { name: 'Design a Distributed Rate Limiter' }).waitFor();
+    await page.getByRole('checkbox', { name: 'Interview mode' }).check();
+    const quota = page.getByText(/Allow up to 100 requests per account/);
+    if (await quota.count()) fail('architecture build', 'interview mode revealed the quota early');
+    await page.getByRole('button', { name: 'What quota should I enforce?' }).click();
+    await quota.waitFor();
+
+    const run = page.getByRole('button', { name: 'Run traffic' });
+    await run.click();
+    await page.getByText('Add a client, a load balancer, and three API servers.').waitFor();
+    for (const name of ['Load balancer', 'Rate limiter', 'API server', 'API server', 'API server']) {
+      await page.getByRole('button', { name: `+ ${name}`, exact: true }).click();
+    }
+    const select = async (name) => page.getByRole('button', { name, exact: true }).click();
+    const connect = async (from, to) => {
+      await select(from);
+      await page.getByLabel('Connect to').selectOption({ label: to });
+      await page.getByRole('button', { name: 'Connect', exact: true }).click();
+    };
+    await connect('Client', 'Rate limiter 1');
+    await connect('Rate limiter 1', 'Load balancer');
+    for (const index of [1, 2, 3]) await connect('Load balancer', `API server ${index}`);
+    await run.click();
+    await page.getByText('Some scenarios failed').waitFor();
+    await page.getByText(/Request 101 at 61s/).waitFor();
+    await select('Rate limiter 1');
+    await page.getByLabel('Algorithm').selectOption('sliding');
+    await run.click();
+    await page.getByText('All scenarios passed').waitFor();
+    if (!(await page.locator('.build-results').evaluate((el) => document.activeElement === el))) {
+      fail('architecture build', 'results did not receive keyboard focus');
+    }
+    if (!(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth))) {
+      fail('architecture build', 'the page overflows horizontally on mobile');
+    }
+    if (!skipAxe) {
+      const { violations } = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+      for (const violation of violations) fail('architecture build accessibility', violation.id);
+    }
+  } finally {
+    await context.close();
+  }
+}
+
 async function measurePerformance(browser, ids) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const rows = [];
@@ -593,6 +644,7 @@ async function main() {
     };
     await phase('App flows', () => testApp(browser, allIds));
     await phase('Keyboard', () => testKeyboard(browser));
+    if (!only || only.has('rate-limiter')) await phase('Architecture build', () => testArchitectureBuild(browser));
     await phase('Mobile', () => testMobile(browser, ids));
     await phase('Lessons', async () => {
       const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
